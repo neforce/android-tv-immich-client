@@ -148,12 +148,6 @@ or set the environment variables `IMMICHCLIENT_KEYSTORE`, `IMMICHCLIENT_KEYSTORE
 - The app is tuned for 2 GB TV boxes: a fixed, small image cache, previews decoded at screen size, small video buffers and a lazily loaded timeline. Keep memory usage in mind when adding features.
 - `fotos/landen_bin.py` builds `assets/landen.bin` (country outlines for the map in the viewer) from Natural Earth data.
 
-## Support the project
-
-Like the app? A donation is appreciated, but never required.
-
-**Bitcoin:** `32u7kzd2vEDWDddTcXcEaUbuZGxQoynu5y`
-
 ## Credits and licences
 
 - [Immich](https://immich.app) (unofficial client, not affiliated). This app uses its public API and the map styles the Immich server provides (vector tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, [Protomaps](https://protomaps.com)).
