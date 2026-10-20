@@ -88,6 +88,7 @@ fun InstelScherm(test: Boolean, terug: (() -> Unit)?, klaar: () -> Unit, finish:
                 Column(Modifier.padding(start = 16.dp)) {
                     Text(stringResource(R.string.koppel_titel), style = MaterialTheme.typography.displaySmall.copy(fontSize = 28.sp), maxLines = 1)
                     Text(stringResource(if (test) R.string.koppel_test else R.string.koppel_eenmalig), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, maxLines = 2)
+                    Text(stringResource(R.string.onofficieel_kort), style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 }
             }
             Spacer(Modifier.height(26.dp))

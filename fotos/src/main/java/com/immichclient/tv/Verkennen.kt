@@ -70,6 +70,8 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
     val eerste = remember { FocusRequester() }
     val terug = remember { FocusRequester() }
     val persoon = stringResource(R.string.persoon)
+    val kopPersonen = stringResource(R.string.personen); val kopPlaatsen = stringResource(R.string.plaatsen)
+    Box(Modifier.fillMaxSize()) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(30),
         state = staat.grid,
@@ -122,6 +124,15 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
                 }
             }
         }
+    }
+    ScrolBalk(
+        fractie = { fractieVan(staat.grid, 1) },
+        beweging = { staat.grid.firstVisibleItemIndex * 7919 + staat.grid.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { staat.grid.canScrollForward || staat.grid.canScrollBackward },
+        label = { (staat.grid.layoutInfo.visibleItemsInfo.firstOrNull()?.key as? String)?.let { if (it.startsWith("s")) kopPlaatsen else if (it.startsWith("p")) kopPersonen else null } },
+        sub = { null },
+        modifier = Modifier.align(Alignment.CenterEnd),
+    )
     }
     LaunchedEffect(staat.personen.isNotEmpty()) {
         delay(30)

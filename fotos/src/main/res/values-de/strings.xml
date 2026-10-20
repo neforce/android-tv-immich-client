@@ -355,4 +355,93 @@
     <string name="html_bezig">Der Fernseher prüft den Server und erstellt einen Schlüssel. Das dauert ein paar Sekunden.</string>
     <string name="html_geen_verbinding_titel">Keine Verbindung zum Fernseher</string>
     <string name="html_geen_verbinding">Ist der Verbindungsbildschirm auf dem Fernseher noch offen, und ist dein Handy im selben WLAN?</string>
+
+    <!-- Inoffiziell (2.1) -->
+    <string name="onofficieel_kort">Inoffizieller Client für Immich</string>
+    <string name="onofficieel_lang">Inoffizielle App, weder mit dem Immich-Projekt verbunden noch von ihm unterstützt. Immich ist eine Marke der jeweiligen Inhaber.</string>
+    <string name="terug_sluit">Zurück schließt diese Ansicht</string>
+    <string name="minuten">%d Min.</string>
+
+    <!-- Bildschirmschoner (2.1) -->
+    <string name="dream_naam">Fotos (Bildschirmschoner)</string>
+    <string name="groep_screensaver">Bildschirmschoner</string>
+    <string name="screensaver">Bildschirmschoner</string>
+    <string name="dream_aan_uitleg">Diese App als Bildschirmschoner dieses Geräts verwenden</string>
+    <string name="dream_status_aan">Aktiv: diese App ist der Bildschirmschoner dieses Geräts</string>
+    <string name="dream_status_uit">Noch nicht der Bildschirmschoner dieses Geräts</string>
+    <string name="dream_status_uit_ok">Noch nicht aktiv – OK drücken, um ihn einzurichten</string>
+    <string name="dream_instellen">Auf diesem Gerät einrichten</string>
+    <string name="dream_instellen_sub">Android TV hat meist keine Auswahl für fremde Bildschirmschoner; so geht es trotzdem.</string>
+    <string name="dream_instellen_uitleg">Status, Anleitung und die einmalige Einrichtung (adb)</string>
+    <string name="dream_voorbeeld">Vorschau</string>
+    <string name="dream_voorbeeld_uitleg">Den Bildschirmschoner jetzt anzeigen; jede Taste schließt ihn</string>
+    <string name="dream_bron">Fotos</string>
+    <string name="dream_bron_uitleg">Welche Fotos der Bildschirmschoner zeigt (immer in zufälliger Reihenfolge)</string>
+    <string name="dream_alle_fotos">Alle Fotos</string>
+    <string name="dream_album">Album</string>
+    <string name="dream_herinneringen">Erinnerungen von heute</string>
+    <string name="dream_persoon">Person</string>
+    <string name="dream_kies">Noch nicht gewählt – OK drücken</string>
+    <string name="dream_tijd_uitleg">Wie lange jedes Foto zu sehen ist (◀ ▶ auf der Fernbedienung: zurück / weiter)</string>
+    <string name="dream_klok">Uhr</string>
+    <string name="dream_klok_uitleg">Uhrzeit und Datum oben links</string>
+    <string name="dream_kaart_uitleg">Umriss des Landes mit dem Aufnahmeort, unten rechts</string>
+    <string name="dream_ken_burns_uitleg">Jedes Foto langsam heranzoomen</string>
+    <string name="dream_info">Datum und Ort</string>
+    <string name="dream_info_uitleg">Datum, Ort und Albumname unten links</string>
+    <string name="dream_geen_fotos">Keine Fotos für diese Quelle des Bildschirmschoners gefunden</string>
+    <string name="dream_geen_verbinding">Keine Verbindung zum Immich-Server; neuer Versuch…</string>
+    <string name="dream_niet_gekoppeld">Noch nicht verbunden: zuerst die App öffnen</string>
+    <string name="dream_recht_ja">Die App darf die Bildschirmschoner-Einstellung selbst ändern</string>
+    <string name="dream_recht_nee">Die App darf die Bildschirmschoner-Einstellung noch nicht ändern (einmalige Berechtigung per adb, siehe unten)</string>
+    <string name="dream_ontw_ja">Entwickleroptionen sind aktiviert</string>
+    <string name="dream_ontw_nee">Entwickleroptionen sind aus</string>
+    <string name="dream_zet_aan">Jetzt einschalten</string>
+    <string name="dream_zet_uit">Jetzt ausschalten</string>
+    <string name="dream_zet_uitleg">Der bisherige Bildschirmschoner wird gemerkt und beim Ausschalten wiederhergestellt</string>
+    <string name="dream_open_systeem">Bildschirmschoner-Einstellungen öffnen</string>
+    <string name="dream_open_systeem_uitleg">In den Systemeinstellungen \"Fotos\" wählen</string>
+    <string name="dream_auto_kop">Automatisch (Netzwerk-Debugging)</string>
+    <string name="dream_auto_uitleg">Das Gerät verbindet sich mit seinem eigenen Debug-Port und richtet alles selbst ein. Voraussetzung: Entwickleroptionen → Netzwerk-Debugging (oder \"ADB über Netzwerk\"). Beim ersten Mal fragt der Fernseher, ob Debugging erlaubt werden soll: Immer zulassen wählen.</string>
+    <string name="dream_auto_knop">Automatisch einrichten</string>
+    <string name="dream_auto_knop_uitleg">Erteilt der App die Berechtigung und macht sie zum Bildschirmschoner; dauert ein paar Sekunden</string>
+    <string name="adb_bezig">Verbinden… falls der Fernseher nach der Debugging-Erlaubnis fragt: Immer zulassen wählen</string>
+    <string name="adb_klaar">Fertig: diese App ist jetzt der Bildschirmschoner</string>
+    <string name="adb_mislukt">Das hat nicht geklappt; bitte die manuellen Schritte unten verwenden</string>
+    <string name="adb_geen_verbinding">Keine Verbindung: zuerst in den Entwickleroptionen Netzwerk-Debugging einschalten</string>
+    <string name="adb_geen_toestemming">Auf dem Fernseher wurde keine Erlaubnis erteilt; bitte noch einmal versuchen</string>
+    <string name="dream_hand_kop">Manuell, von einem Computer aus</string>
+    <string name="dream_stap1">Entwickleroptionen aktivieren: Einstellungen → Geräteeinstellungen → Info → bei \"Build\" siebenmal OK drücken.</string>
+    <string name="dream_stap2">Einstellungen → Geräteeinstellungen → Entwickleroptionen → Netzwerk-Debugging einschalten (oder USB-Debugging mit Kabel).</string>
+    <string name="dream_stap3">Auf einem Computer mit adb (Android Platform Tools) ausführen:</string>
+    <string name="dream_stap4">Beim ersten Mal fragt der Fernseher, ob der Computer zugreifen darf. Nach dem zweiten Befehl kann die App den Bildschirmschoner selbst ein- und ausschalten; die letzten beiden Befehle stellen ihn sofort ein.</string>
+    <string name="dream_open_over">\"Info\" öffnen</string>
+    <string name="dream_open_over_uitleg">Um die Entwickleroptionen zu aktivieren</string>
+    <string name="dream_open_ontw">Entwickleroptionen öffnen</string>
+    <string name="dream_open_ontw_uitleg">Um Netzwerk-Debugging einzuschalten</string>
+    <string name="dream_sleutel_fout">Der Immich-Server akzeptiert den Schlüssel dieses Geräts nicht mehr: App öffnen und „Erneut verbinden“ wählen</string>
+    <string name="dream_usb_ja">USB-Debugging ist aktiviert</string>
+    <string name="dream_usb_nee">USB-Debugging ist deaktiviert</string>
+    <string name="dream_net_ja">Netzwerk-Debugging ist aktiviert (Port 5555)</string>
+    <string name="dream_net_nee">Netzwerk-Debugging ist deaktiviert (nötig für „Automatisch einrichten“)</string>
+    <string name="dream_nu">Aktueller Bildschirmschoner: %1$s</string>
+    <string name="dream_start_na">startet nach %1$s ohne Bedienung</string>
+
+    <!-- Diagnose (2.1) -->
+    <string name="diagnose">Diagnose</string>
+    <string name="diagnose_uitleg">Warum die App zuletzt beendet wurde (bleibt auf diesem Gerät)</string>
+    <string name="diagnose_sub">Die letzten unerwarteten Beendigungen der App mit Grund. Es wird nichts gesendet.</string>
+    <string name="diagnose_leeg">Nichts aufgezeichnet: die App wurde nicht unerwartet beendet.</string>
+    <string name="diagnose_voet">Hinweis: ein Absturz wird sofort eingetragen; was Android meldet (Speicher, ANR), erscheint beim nächsten Start.</string>
+    <string name="diag_crash">Absturz (Fehler in der App)</string>
+    <string name="diag_crash_native">Absturz (nativer Code)</string>
+    <string name="diag_anr">Reagiert nicht (ANR)</string>
+    <string name="diag_geheugen">Von Android beendet: zu wenig Speicher</string>
+    <string name="diag_signaal">Beendet (Signal, z. B. während eines Updates)</string>
+    <string name="diag_gebruiker">Vom Nutzer oder vom System gestoppt</string>
+    <string name="diag_systeem">Vom System beendet</string>
+    <string name="diag_gevangen">Fehler abgefangen (die App lief weiter)</string>
+    <string name="diag_anders">Sonstiges</string>
+    <string name="diag_voorgrond">im Vordergrund</string>
+
 </resources>

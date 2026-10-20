@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tandwieltje bij de screensaver in de systeeminstellingen (waar die keuze bestaat): opent de instellingen van de app. -->
+<dream xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.immichclient.tv/.ScreensaverInstellingen" />

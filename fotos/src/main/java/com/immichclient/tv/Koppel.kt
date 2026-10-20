@@ -176,7 +176,7 @@ object Koppel {
     }
 
     /** IPv4-adres van de actieve interface (wifi of ethernet), geen loopback. */
-    private fun eigenIp(): String? = runCatching {
+    fun eigenIp(): String? = runCatching {
         NetworkInterface.getNetworkInterfaces().toList()
             .filter { it.isUp && !it.isLoopback }
             .sortedBy { n -> when { n.name.startsWith("eth") -> 0; n.name.startsWith("wlan") -> 1; else -> 2 } }

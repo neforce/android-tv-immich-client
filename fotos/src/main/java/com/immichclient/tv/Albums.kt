@@ -89,6 +89,7 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(zoekOpen) { if (wasOpen && !zoekOpen) { delay(16); runCatching { zoekKnop.requestFocus() } }; wasOpen = zoekOpen }
 
+    Box(Modifier.fillMaxSize()) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(5),
         state = staat.grid,
@@ -105,13 +106,13 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
                         Keuze(
                             selected = staat.volgorde == v, onClick = { staat.volgorde = v },
                             modifier = if (v == AlbumVolgorde.RECENT) Modifier.focusRequester(eerste) else Modifier,
-                        ) { Text(stringResource(v.label)) }
+                        tekst = stringResource(v.label))
                     }
-                    Keuze(selected = staat.alleenGedeeld, onClick = { staat.alleenGedeeld = !staat.alleenGedeeld }) { Text(stringResource(R.string.gedeeld)) }
+                    Keuze(selected = staat.alleenGedeeld, onClick = { staat.alleenGedeeld = !staat.alleenGedeeld }, tekst = stringResource(R.string.gedeeld))
                     Keuze(
                         selected = staat.zoek.isNotBlank(), onClick = { zoekOpen = true }, modifier = Modifier.focusRequester(zoekKnop),
                         leadingIcon = { Icon(Icons.Filled.Search, null, Modifier.width(18.dp)) },
-                    ) { Text(staat.zoek.ifBlank { stringResource(R.string.zoek_album) }) }
+                    tekst = staat.zoek.ifBlank { stringResource(R.string.zoek_album) })
                 }
             }
         }
@@ -124,6 +125,15 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
                 nav.open(Scherm.Tijdlijn(a.naam, albumSub(a), Filter(albumId = a.id), !a.oudsteEerst, false, nav.scope))
             }
         }
+    }
+    ScrolBalk(
+        fractie = { fractieVan(staat.grid, 1) },
+        beweging = { staat.grid.firstVisibleItemIndex * 7919 + staat.grid.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { staat.grid.canScrollForward || staat.grid.canScrollBackward },
+        label = { null },
+        sub = { "${Taal.getal((staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0) + 1)} / ${Taal.getal(lijst.size)}" },
+        modifier = Modifier.align(Alignment.CenterEnd),
+    )
     }
     LaunchedEffect(Unit) {
         delay(30)

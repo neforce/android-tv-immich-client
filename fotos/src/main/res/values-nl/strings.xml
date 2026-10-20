@@ -355,4 +355,93 @@
     <string name="html_bezig">De tv controleert de server en maakt een sleutel aan. Dit duurt een paar seconden.</string>
     <string name="html_geen_verbinding_titel">Geen verbinding met de tv</string>
     <string name="html_geen_verbinding">Staat het koppelscherm nog open op de tv en zit je telefoon op hetzelfde wifi-netwerk?</string>
+
+    <!-- Onofficieel (2.1) -->
+    <string name="onofficieel_kort">Onofficiële client voor Immich</string>
+    <string name="onofficieel_lang">Onofficiële app, niet verbonden aan of goedgekeurd door het Immich-project. Immich is een handelsmerk van de betreffende eigenaren.</string>
+    <string name="terug_sluit">Terug sluit dit scherm</string>
+    <string name="minuten">%d min</string>
+
+    <!-- Screensaver (2.1) -->
+    <string name="dream_naam">Foto\'s (screensaver)</string>
+    <string name="groep_screensaver">Screensaver</string>
+    <string name="screensaver">Screensaver</string>
+    <string name="dream_aan_uitleg">Deze app als screensaver van dit apparaat gebruiken</string>
+    <string name="dream_status_aan">Actief: deze app is de screensaver van dit apparaat</string>
+    <string name="dream_status_uit">Nog niet de screensaver van dit apparaat</string>
+    <string name="dream_status_uit_ok">Nog niet actief – druk op OK om het in te stellen</string>
+    <string name="dream_instellen">Instellen op dit apparaat</string>
+    <string name="dream_instellen_sub">Android TV heeft meestal geen scherm om een andere screensaver te kiezen; zo werkt het toch.</string>
+    <string name="dream_instellen_uitleg">Toestand, uitleg en de eenmalige instelling (adb)</string>
+    <string name="dream_voorbeeld">Voorbeeld</string>
+    <string name="dream_voorbeeld_uitleg">De screensaver nu laten zien; elke toets sluit hem</string>
+    <string name="dream_bron">Foto\'s</string>
+    <string name="dream_bron_uitleg">Welke foto\'s de screensaver toont (altijd in willekeurige volgorde)</string>
+    <string name="dream_alle_fotos">Alle foto\'s</string>
+    <string name="dream_album">Album</string>
+    <string name="dream_herinneringen">Herinneringen van vandaag</string>
+    <string name="dream_persoon">Persoon</string>
+    <string name="dream_kies">Nog niet gekozen – druk op OK</string>
+    <string name="dream_tijd_uitleg">Hoe lang elke foto blijft staan (◀ ▶ op de afstandsbediening: vorige / volgende)</string>
+    <string name="dream_klok">Klok</string>
+    <string name="dream_klok_uitleg">Tijd en datum linksboven</string>
+    <string name="dream_kaart_uitleg">Contour van het land met de plek van de foto, rechtsonder</string>
+    <string name="dream_ken_burns_uitleg">Langzaam inzoomen op elke foto</string>
+    <string name="dream_info">Datum en plaats</string>
+    <string name="dream_info_uitleg">Datum, plaats en albumnaam linksonder</string>
+    <string name="dream_geen_fotos">Geen foto\'s gevonden voor deze bron van de screensaver</string>
+    <string name="dream_geen_verbinding">Geen verbinding met de Immich-server; probeert het opnieuw…</string>
+    <string name="dream_niet_gekoppeld">Nog niet gekoppeld: open eerst de app</string>
+    <string name="dream_recht_ja">De app mag de screensaver-instelling zelf veranderen</string>
+    <string name="dream_recht_nee">De app mag de screensaver-instelling nog niet veranderen (eenmalig recht via adb, zie hieronder)</string>
+    <string name="dream_ontw_ja">Ontwikkelaarsopties staan aan</string>
+    <string name="dream_ontw_nee">Ontwikkelaarsopties staan uit</string>
+    <string name="dream_zet_aan">Nu aanzetten</string>
+    <string name="dream_zet_uit">Nu uitzetten</string>
+    <string name="dream_zet_uitleg">De vorige screensaver wordt onthouden en komt terug als je dit uitzet</string>
+    <string name="dream_open_systeem">Screensaver-instellingen openen</string>
+    <string name="dream_open_systeem_uitleg">Kies \"Foto\'s\" in de systeeminstellingen</string>
+    <string name="dream_auto_kop">Automatisch (netwerkfoutopsporing)</string>
+    <string name="dream_auto_uitleg">Het apparaat verbindt met zijn eigen foutopsporingspoort en stelt alles zelf in. Vereist Ontwikkelaarsopties → Netwerkfoutopsporing (of \"ADB via netwerk\"). De eerste keer vraagt de tv of foutopsporing mag: kies Altijd toestaan.</string>
+    <string name="dream_auto_knop">Automatisch instellen</string>
+    <string name="dream_auto_knop_uitleg">Geeft de app het recht en maakt hem de screensaver; duurt een paar seconden</string>
+    <string name="adb_bezig">Verbinden… als de tv vraagt of foutopsporing mag: kies Altijd toestaan</string>
+    <string name="adb_klaar">Klaar: deze app is nu de screensaver</string>
+    <string name="adb_mislukt">Dat is niet gelukt; gebruik de handmatige stappen hieronder</string>
+    <string name="adb_geen_verbinding">Geen verbinding: zet eerst Netwerkfoutopsporing aan in de Ontwikkelaarsopties</string>
+    <string name="adb_geen_toestemming">Er is op de tv geen toestemming gegeven; probeer het opnieuw</string>
+    <string name="dream_hand_kop">Handmatig, vanaf een computer</string>
+    <string name="dream_stap1">Ontwikkelaarsopties aanzetten: Instellingen → Apparaatvoorkeuren → Over → zeven keer op OK bij \"Build\".</string>
+    <string name="dream_stap2">Instellingen → Apparaatvoorkeuren → Ontwikkelaarsopties → Netwerkfoutopsporing aanzetten (of USB-foutopsporing met een kabel).</string>
+    <string name="dream_stap3">Op een computer met adb (Android platform tools) uitvoeren:</string>
+    <string name="dream_stap4">De eerste keer vraagt de tv of de computer mag. Na het tweede commando kan de app de screensaver zelf aan- en uitzetten; de laatste twee commando\'s zetten hem meteen.</string>
+    <string name="dream_open_over">\"Over\" openen</string>
+    <string name="dream_open_over_uitleg">Om de Ontwikkelaarsopties aan te zetten</string>
+    <string name="dream_open_ontw">Ontwikkelaarsopties openen</string>
+    <string name="dream_open_ontw_uitleg">Om Netwerkfoutopsporing aan te zetten</string>
+    <string name="dream_sleutel_fout">De Immich-server accepteert de sleutel van dit apparaat niet meer: open de app en kies Opnieuw koppelen</string>
+    <string name="dream_usb_ja">USB-foutopsporing staat aan</string>
+    <string name="dream_usb_nee">USB-foutopsporing staat uit</string>
+    <string name="dream_net_ja">Netwerkfoutopsporing staat aan (poort 5555)</string>
+    <string name="dream_net_nee">Netwerkfoutopsporing staat uit (nodig voor Automatisch instellen)</string>
+    <string name="dream_nu">Huidige screensaver: %1$s</string>
+    <string name="dream_start_na">start na %1$s zonder bediening</string>
+
+    <!-- Diagnose (2.1) -->
+    <string name="diagnose">Diagnose</string>
+    <string name="diagnose_uitleg">Waarom de app de vorige keer sloot (blijft op dit apparaat)</string>
+    <string name="diagnose_sub">De laatste keren dat de app onverwacht sloot, met de reden. Er wordt niets verstuurd.</string>
+    <string name="diagnose_leeg">Niets vastgelegd: de app is niet onverwacht gesloten.</string>
+    <string name="diagnose_voet">Tip: een crash komt hier meteen in te staan; wat Android meldt (geheugen, ANR) verschijnt bij de volgende start.</string>
+    <string name="diag_crash">Crash (fout in de app)</string>
+    <string name="diag_crash_native">Crash (native code)</string>
+    <string name="diag_anr">Reageert niet (ANR)</string>
+    <string name="diag_geheugen">Gesloten door Android: te weinig geheugen</string>
+    <string name="diag_signaal">Beëindigd (signaal, bijv. tijdens een update)</string>
+    <string name="diag_gebruiker">Gestopt door de gebruiker of het systeem</string>
+    <string name="diag_systeem">Gesloten door het systeem</string>
+    <string name="diag_gevangen">Fout opgevangen (de app liep door)</string>
+    <string name="diag_anders">Anders</string>
+    <string name="diag_voorgrond">op de voorgrond</string>
+
 </resources>

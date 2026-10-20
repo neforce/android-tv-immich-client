@@ -228,6 +228,12 @@ object Immich {
         }.filter { it.assets.isNotEmpty() }.sortedByDescending { it.jaar }
     }
 
+    /** Willekeurige foto's (screensaver "alle foto's"): /search/random geeft [n] assets met exif in één call. */
+    suspend fun willekeurig(n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val a = JSONArray(post("/search/random", JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true)))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     /** Eén asset (voor de viewer vanaf de kaart: daar zijn alleen id's bekend). */
     suspend fun asset(id: String): Asset = withContext(Dispatchers.Default) { asset(JSONObject(get("/assets/$id"))) }
 

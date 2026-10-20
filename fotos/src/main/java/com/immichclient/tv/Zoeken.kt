@@ -221,12 +221,12 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                         ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Mic, stringResource(R.string.spraak)) } }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        for (m in ZoekModus.entries) Keuze(selected = staat.modus == m, onClick = { staat.modus = m; staat.zoek(ctx) }) { Text(stringResource(m.label)) }
+                        for (m in ZoekModus.entries) Keuze(selected = staat.modus == m, onClick = { staat.modus = m; staat.zoek(ctx) }, tekst = stringResource(m.label))
                         Spacer(Modifier.width(18.dp))
-                        for (t in ZoekType.entries) Keuze(selected = staat.type == t, onClick = { staat.type = t; staat.zoek(ctx) }) { Text(stringResource(t.label)) }
+                        for (t in ZoekType.entries) Keuze(selected = staat.type == t, onClick = { staat.type = t; staat.zoek(ctx) }, tekst = stringResource(t.label))
                     }
                     if (staat.res.assets.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        for (v in ZoekVolgorde.entries) Keuze(selected = staat.volgorde == v, onClick = { staat.volgorde = v }) { Text(stringResource(v.label)) }
+                        for (v in ZoekVolgorde.entries) Keuze(selected = staat.volgorde == v, onClick = { staat.volgorde = v }, tekst = stringResource(v.label))
                     }
                     when {
                         staat.res.bezig && staat.res.assets.isEmpty() -> Text(stringResource(R.string.zoeken_bezig), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
@@ -238,6 +238,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                 }
             }
         }
+        LijstBalk(staat.res.raster.lijst, rijen, gesorteerd.size, staat.res.bezig, Modifier.align(Alignment.CenterEnd))
     }
     LaunchedEffect(Unit) { delay(30); if (!staat.res.gezocht) runCatching { veld.requestFocus() } }
     // laag dicht: focus terug op het zoekveld (anders springt Android naar de lade); resultaten nemen hem daarna over
@@ -255,7 +256,7 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
             Text(stringResource(R.string.recent_gezocht), style = MaterialTheme.typography.titleMedium)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(recent) { t ->
-                    Keuze(selected = false, onClick = { zoek(t) }, leadingIcon = { Icon(Icons.Filled.History, null, Modifier.width(18.dp)) }) { Text(t) }
+                    Keuze(selected = false, onClick = { zoek(t) }, leadingIcon = { Icon(Icons.Filled.History, null, Modifier.width(18.dp)) }, tekst = t)
                 }
             }
         }
@@ -263,7 +264,7 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
         val suggesties = stringArrayResource(R.array.suggesties).toList()
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items(suggesties) { t ->
-                Keuze(selected = false, onClick = { zoek(t) }) { Text(t) }
+                Keuze(selected = false, onClick = { zoek(t) }, tekst = t)
             }
         }
         if (staat.personen.isNotEmpty()) {
@@ -274,8 +275,8 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
                     Keuze(
                         selected = false,
                         onClick = { nav.open(Scherm.Tijdlijn(p.naam, persoon, Filter(persoonId = p.id), true, false, nav.scope)) },
-                        leadingIcon = { Gezicht(p, 26.dp) },
-                    ) { Text(p.naam) }
+                        leadingIcon = { Gezicht(p, 26.dp) }, tekst = p.naam,
+                    )
                 }
             }
         }
@@ -383,7 +384,28 @@ fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
                 if (res.fout != null && res.assets.isEmpty()) Text(stringResource(R.string.laden_mislukt, res.fout.orEmpty()), color = Kleur.zacht)
             }
         }
+        LijstBalk(res.raster.lijst, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
     }
+}
+
+/** Scrollbalk voor een platte lijst (zoekresultaten, plaats): dagkop van de eerste zichtbare rij + "N / M". */
+@Composable
+fun LijstBalk(lijst: androidx.compose.foundation.lazy.LazyListState, rijen: List<Rij>, totaal: Int, bezig: Boolean, modifier: Modifier, boven: Int = 1) {
+    if (rijen.isEmpty()) return
+    val eerste = remember(rijen) { eersteFotoPerRij(rijen) }
+    fun rijNu() = (lijst.firstVisibleItemIndex - boven).coerceIn(0, rijen.lastIndex)
+    ScrolBalk(
+        fractie = { fractieVan(lijst, boven) },
+        beweging = { lijst.firstVisibleItemIndex * 7919 + lijst.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { lijst.canScrollForward || lijst.canScrollBackward },
+        label = {
+            var r = rijNu()
+            while (r > 0 && (rijen[r] as? RijFotos)?.regel?.metKop != true) r--
+            (rijen[r] as? RijFotos)?.regel?.stukken?.firstOrNull()?.kop
+        },
+        sub = { "${Taal.getal(eerste[rijNu()] + 1)} / ${Taal.getal(totaal)}" + if (bezig) "+" else "" },
+        modifier = modifier,
+    )
 }
 
 /** Herinneringen van de afgelopen week: per dag de jaren, zoals "Op deze dag" in Immich. */

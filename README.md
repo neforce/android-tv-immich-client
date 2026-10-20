@@ -21,6 +21,9 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 - **Albums**: sort by recent activity, newest photos, name or size, filter shared albums, search by name.
 - **World map**: all geotagged photos as clusters on a smooth vector map (dark, light or satellite) that split up as you zoom in.
 - **Favorites**.
+- **Screensaver**: your photos as the system screensaver, with clock, country map and countdown ring. See [Screensaver](#screensaver).
+- **Scroll bar** with the position in your whole library (month, photo number, years).
+- **Diagnostics** under Settings → About: the reason the app last stopped, kept on the device only.
 - **Settings**: slideshow, viewer, timeline, map, accent colour, app name and icon, greeting, start screen and more. See [Settings](#settings).
 - **Languages**: English, Dutch, German, French and Spanish, with a language picker on first start.
 - **Easy pairing**: scan a QR code with your phone and log in. No typing of long API keys with the remote.
@@ -113,6 +116,56 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 | | App name and icon | four variants for the launcher |
 | Storage | Clear image cache | |
 | Account | Server, signed in as, connect again, disconnect | |
+
+## Screensaver
+
+The app can be the system screensaver ("dream") of your Android TV or Google TV device. It shows your Immich photos full screen:
+
+- a soft crossfade between photos and an optional slow Ken Burns zoom; landscape photos close to 3:2 or 16:9 fill the screen, other photos are shown whole on a blurred background
+- clock and date in the top left corner
+- for photos with GPS: an outline of the country with a dot where the photo was taken, plus month and place
+- a small ring that counts down to the next photo, with date, place and source (album name, person, "3 years ago") in the bottom left corner
+- ◀ / ▶ on the remote show the previous / next photo, volume keys keep working, any other key closes the screensaver
+
+If the server can't be reached, the current photo stays on screen and the screensaver keeps retrying.
+
+### Options (Settings → Screensaver)
+
+| Option | Values |
+| --- | --- |
+| Screensaver | On / Off (needs the permission below) |
+| Set up on this device | Status (screensaver active, permission, Developer options, USB and network debugging) and setup help |
+| Preview | Shows the screensaver right away |
+| Photos | All photos, Album, Favorites, Today's memories, Person, always in random order; an empty source falls back to all photos |
+| Time per photo | 5 s – 2 min |
+| Clock, Map, Ken Burns, Date and place | On / Off |
+
+### Turning it on
+
+Android TV and Google TV have no menu for picking a third-party screensaver. The system setting exists, but an app may only change it after a one-time permission that only adb can give. This works the same way on Android TV devices (e.g. NVIDIA Shield) and on Google TV (e.g. Chromecast with Google TV).
+
+1. **Enable Developer options:** Settings → Device Preferences → About → select **Build** 7 times (Google TV: Settings → System → About → Android TV OS build).
+2. **Enable debugging:** in Developer options, turn on **USB debugging**, and **Network debugging** (or "ADB over network") if your device has it.
+3. **Then either:**
+   - **In the app:** Settings → Screensaver → Set up on this device → **Set up automatically**. The device connects to its own adb port (127.0.0.1:5555, needs network debugging). The first time, the TV asks whether to allow debugging: choose **Always allow**. The app grants itself the permission and becomes the screensaver.
+   - **From a computer with adb** ([platform tools](https://developer.android.com/tools/releases/platform-tools)):
+     ```
+     adb connect <ip-of-your-tv>
+     adb shell pm grant com.immichclient.tv android.permission.WRITE_SECURE_SETTINGS
+     ```
+     From then on the app can turn the screensaver on and off by itself (Settings → Screensaver). To set it directly instead:
+     ```
+     adb shell settings put secure screensaver_components com.immichclient.tv/.FotoDream
+     adb shell settings put secure screensaver_enabled 1
+     ```
+
+The screensaver starts after the device's normal idle time; the setup screen in the app shows how long that is. You can turn Developer options off again afterwards: the permission stays.
+
+### Back to the default screensaver
+
+- In the app: Settings → Screensaver → **Off**. This restores the screensaver that was active before.
+- With adb: `adb shell settings delete secure screensaver_components`. The system falls back to its default screensaver. Uninstalling the app does the same.
+- Optional: `adb shell pm revoke com.immichclient.tv android.permission.WRITE_SECURE_SETTINGS`
 
 ## Building
 

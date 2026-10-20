@@ -14,8 +14,8 @@ android {
         applicationId = "com.immichclient.tv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "2.0"
+        versionCode = 6
+        versionName = "2.2"
         // MapLibre heeft native code: 32-bit (NVIDIA Shield: abilist armeabi-v7a) én 64-bit voor andere boxen; x86 niet.
         // Elke ABI kost ~8 MB in de APK.
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
@@ -79,6 +79,11 @@ dependencies {
     // Wereldkaart: MapLibre (OpenGL) met de vector-tegelstijl van Immich (tiles.immich.cloud).
     // 12.3.1 is de nieuwste die met Kotlin 2.0 is gebouwd; 13.x (Kotlin 2.2-metadata) compileert niet met Kotlin 2.0.21.
     implementation("org.maplibre.gl:android-sdk:12.3.1")
+    // Screensaver: Compose in een DreamService heeft een eigen Lifecycle/SavedState-eigenaar nodig (Dream.kt)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.savedstate:savedstate-ktx:1.2.1")
+    // Screensaver instellen via de eigen netwerk-adb van de box (ScreensaverInstellen.kt); klein, alleen okio
+    implementation("dev.mobile:dadb:1.2.10")
     // Video's
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")

@@ -59,6 +59,12 @@ import coil3.request.crossfade
 import coil3.size.Precision
 import coil3.size.Size
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.type
 
 /** Kleuren van Immich (donker thema). */
 object Kleur {
@@ -194,18 +200,24 @@ private fun VideoLabel(a: Asset, modifier: Modifier) {
     }
 }
 
-/** Chip (sorteren, filters): leesbaar in elke toestand, ook gekozen + gefocust. */
+/**
+ * Chip (sorteren, filters): leesbaar in elke toestand, ook gekozen + gefocust. De tekstkleur staat hier expliciet: de
+ * tekststijlen van het thema hebben een eigen kleur (Kleur.tekst) en die wint van de content-kleur van de chip, dus
+ * met alleen `FilterChipDefaults.colors` bleef de tekst lichtgrijs op de lichte accentkleur (onleesbaar bij focus).
+ */
 @Composable
 fun Keuze(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: (@Composable () -> Unit)? = null,
-    content: @Composable () -> Unit,
+    tekst: String,
 ) {
     val donker = Kleur.opPrimair
+    var focus by remember { mutableStateOf(false) }
+    val kleur = when { focus -> donker; selected -> Kleur.primair; else -> Kleur.tekst }
     FilterChip(
-        selected = selected, onClick = onClick, modifier = modifier, leadingIcon = leadingIcon,
+        selected = selected, onClick = onClick, modifier = modifier.onFocusChanged { focus = it.isFocused }, leadingIcon = leadingIcon,
         colors = FilterChipDefaults.colors(
             containerColor = Color.Transparent, contentColor = Kleur.tekst,
             focusedContainerColor = Kleur.primair, focusedContentColor = donker,
@@ -214,8 +226,20 @@ fun Keuze(
             pressedContainerColor = Kleur.primair, pressedContentColor = donker,
             pressedSelectedContainerColor = Kleur.primair, pressedSelectedContentColor = donker,
         ),
-        content = { content() },
+        content = { Text(tekst, color = kleur, maxLines = 1) },
     )
+}
+
+/** Ringetje dat volloopt (diashow, screensaver): [deel] 0..1. */
+@Composable
+fun VoortgangRing(deel: () -> Float, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier.size(22.dp)) {
+        val dikte = 2.2.dp.toPx()
+        // donkere rand eronder: ook op een lichte foto te zien
+        drawCircle(Color(0x59000000), style = androidx.compose.ui.graphics.drawscope.Stroke(dikte * 2.4f))
+        drawCircle(Color(0x38FFFFFF), style = androidx.compose.ui.graphics.drawscope.Stroke(dikte))
+        drawArc(Color(0xD9FFFFFF), -90f, 360f * deel(), false, style = androidx.compose.ui.graphics.drawscope.Stroke(dikte, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+    }
 }
 
 /** Ronde gezichtsfoto van een persoon. */
@@ -231,6 +255,22 @@ fun Gezicht(p: Persoon, grootte: Dp) {
 fun Modifier.focusVangen(): Modifier = this
     .focusProperties { exit = { androidx.compose.ui.focus.FocusRequester.Cancel } }
     .focusGroup()
+
+/** ▲▼ scrollen een lange tekstlaag (verticalScroll heeft zelf geen toetsbediening). */
+@Composable
+fun Modifier.toetsScroll(scroll: androidx.compose.foundation.ScrollState): Modifier {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    return this.onPreviewKeyEvent { e ->
+        if (e.type != androidx.compose.ui.input.key.KeyEventType.KeyDown) return@onPreviewKeyEvent false
+        val stap = when (e.key.nativeKeyCode) {
+            android.view.KeyEvent.KEYCODE_DPAD_DOWN -> 220f
+            android.view.KeyEvent.KEYCODE_DPAD_UP -> -220f
+            else -> return@onPreviewKeyEvent false
+        }
+        scope.launch { scroll.animateScrollBy(stap) }
+        true
+    }
+}
 
 /** Donker verloop onder tekst op een foto. */
 val onderVerloop = Brush.verticalGradient(0f to Color.Transparent, 0.45f to Color.Transparent, 1f to Color(0xD9000000))

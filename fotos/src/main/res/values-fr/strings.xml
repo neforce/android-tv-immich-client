@@ -361,4 +361,93 @@
     <string name="html_bezig">Le téléviseur vérifie le serveur et crée une clé. Cela prend quelques secondes.</string>
     <string name="html_geen_verbinding_titel">Pas de connexion avec le téléviseur</string>
     <string name="html_geen_verbinding">L\'écran de connexion est-il toujours ouvert sur le téléviseur, et votre téléphone est-il sur le même Wi-Fi ?</string>
+
+    <!-- Non officiel (2.1) -->
+    <string name="onofficieel_kort">Client non officiel pour Immich</string>
+    <string name="onofficieel_lang">Application non officielle, sans lien avec le projet Immich et non approuvée par lui. Immich est une marque de ses propriétaires respectifs.</string>
+    <string name="terug_sluit">Retour ferme cet écran</string>
+    <string name="minuten">%d min</string>
+
+    <!-- Écran de veille (2.1) -->
+    <string name="dream_naam">Photos (écran de veille)</string>
+    <string name="groep_screensaver">Écran de veille</string>
+    <string name="screensaver">Écran de veille</string>
+    <string name="dream_aan_uitleg">Utiliser cette application comme écran de veille de cet appareil</string>
+    <string name="dream_status_aan">Actif : cette application est l\'écran de veille de cet appareil</string>
+    <string name="dream_status_uit">Pas encore l\'écran de veille de cet appareil</string>
+    <string name="dream_status_uit_ok">Pas encore actif – appuyez sur OK pour le configurer</string>
+    <string name="dream_instellen">Configurer sur cet appareil</string>
+    <string name="dream_instellen_sub">Android TV n\'a généralement pas d\'écran pour choisir un autre écran de veille ; voici comment faire quand même.</string>
+    <string name="dream_instellen_uitleg">État, aide et configuration unique (adb)</string>
+    <string name="dream_voorbeeld">Aperçu</string>
+    <string name="dream_voorbeeld_uitleg">Afficher l\'écran de veille maintenant ; n\'importe quelle touche le ferme</string>
+    <string name="dream_bron">Photos</string>
+    <string name="dream_bron_uitleg">Quelles photos l\'écran de veille affiche (toujours dans un ordre aléatoire)</string>
+    <string name="dream_alle_fotos">Toutes les photos</string>
+    <string name="dream_album">Album</string>
+    <string name="dream_herinneringen">Souvenirs du jour</string>
+    <string name="dream_persoon">Personne</string>
+    <string name="dream_kies">Pas encore choisi – appuyez sur OK</string>
+    <string name="dream_tijd_uitleg">Durée d\'affichage de chaque photo (◀ ▶ sur la télécommande : précédente / suivante)</string>
+    <string name="dream_klok">Horloge</string>
+    <string name="dream_klok_uitleg">Heure et date en haut à gauche</string>
+    <string name="dream_kaart_uitleg">Contour du pays avec le lieu de la photo, en bas à droite</string>
+    <string name="dream_ken_burns_uitleg">Zoomer lentement sur chaque photo</string>
+    <string name="dream_info">Date et lieu</string>
+    <string name="dream_info_uitleg">Date, lieu et nom de l\'album en bas à gauche</string>
+    <string name="dream_geen_fotos">Aucune photo trouvée pour cette source de l\'écran de veille</string>
+    <string name="dream_geen_verbinding">Pas de connexion au serveur Immich ; nouvel essai…</string>
+    <string name="dream_niet_gekoppeld">Pas encore connecté : ouvrez d\'abord l\'application</string>
+    <string name="dream_recht_ja">L\'application peut modifier elle-même le réglage de l\'écran de veille</string>
+    <string name="dream_recht_nee">L\'application ne peut pas encore modifier le réglage de l\'écran de veille (autorisation unique via adb, voir ci-dessous)</string>
+    <string name="dream_ontw_ja">Les options pour les développeurs sont activées</string>
+    <string name="dream_ontw_nee">Les options pour les développeurs sont désactivées</string>
+    <string name="dream_zet_aan">Activer maintenant</string>
+    <string name="dream_zet_uit">Désactiver maintenant</string>
+    <string name="dream_zet_uitleg">L\'écran de veille précédent est mémorisé et rétabli quand vous désactivez celui-ci</string>
+    <string name="dream_open_systeem">Ouvrir les réglages de l\'écran de veille</string>
+    <string name="dream_open_systeem_uitleg">Choisissez « Photos » dans les réglages du système</string>
+    <string name="dream_auto_kop">Automatique (débogage réseau)</string>
+    <string name="dream_auto_uitleg">L\'appareil se connecte à son propre port de débogage et configure tout lui-même. Nécessite Options pour les développeurs → Débogage réseau (ou « ADB via le réseau »). La première fois, le téléviseur demande s\'il faut autoriser le débogage : choisissez Toujours autoriser.</string>
+    <string name="dream_auto_knop">Configurer automatiquement</string>
+    <string name="dream_auto_knop_uitleg">Accorde l\'autorisation à l\'application et en fait l\'écran de veille ; prend quelques secondes</string>
+    <string name="adb_bezig">Connexion… si le téléviseur demande d\'autoriser le débogage : choisissez Toujours autoriser</string>
+    <string name="adb_klaar">Terminé : cette application est maintenant l\'écran de veille</string>
+    <string name="adb_mislukt">Cela n\'a pas fonctionné ; utilisez les étapes manuelles ci-dessous</string>
+    <string name="adb_geen_verbinding">Pas de connexion : activez d\'abord le débogage réseau dans les options pour les développeurs</string>
+    <string name="adb_geen_toestemming">Aucune autorisation n\'a été donnée sur le téléviseur ; réessayez</string>
+    <string name="dream_hand_kop">Manuellement, depuis un ordinateur</string>
+    <string name="dream_stap1">Activer les options pour les développeurs : Paramètres → Préférences relatives à l\'appareil → À propos → appuyez sept fois sur OK sur « Build ».</string>
+    <string name="dream_stap2">Paramètres → Préférences relatives à l\'appareil → Options pour les développeurs → activez le débogage réseau (ou le débogage USB avec un câble).</string>
+    <string name="dream_stap3">Sur un ordinateur avec adb (Android platform tools), exécutez :</string>
+    <string name="dream_stap4">La première fois, le téléviseur demande d\'autoriser l\'ordinateur. Après la deuxième commande, l\'application peut activer et désactiver l\'écran de veille elle-même ; les deux dernières commandes le règlent immédiatement.</string>
+    <string name="dream_open_over">Ouvrir « À propos »</string>
+    <string name="dream_open_over_uitleg">Pour activer les options pour les développeurs</string>
+    <string name="dream_open_ontw">Ouvrir les options pour les développeurs</string>
+    <string name="dream_open_ontw_uitleg">Pour activer le débogage réseau</string>
+    <string name="dream_sleutel_fout">Le serveur Immich n\'accepte plus la clé de cet appareil : ouvrez l\'application et choisissez Reconnecter</string>
+    <string name="dream_usb_ja">Le débogage USB est activé</string>
+    <string name="dream_usb_nee">Le débogage USB est désactivé</string>
+    <string name="dream_net_ja">Le débogage réseau est activé (port 5555)</string>
+    <string name="dream_net_nee">Le débogage réseau est désactivé (nécessaire pour « Configurer automatiquement »)</string>
+    <string name="dream_nu">Écran de veille actuel : %1$s</string>
+    <string name="dream_start_na">démarre après %1$s sans activité</string>
+
+    <!-- Diagnostic (2.1) -->
+    <string name="diagnose">Diagnostic</string>
+    <string name="diagnose_uitleg">Pourquoi l\'application s\'est fermée la dernière fois (reste sur cet appareil)</string>
+    <string name="diagnose_sub">Les dernières fermetures inattendues de l\'application, avec la raison. Rien n\'est envoyé.</string>
+    <string name="diagnose_leeg">Rien d\'enregistré : l\'application ne s\'est pas fermée de façon inattendue.</string>
+    <string name="diagnose_voet">Astuce : un plantage est noté ici immédiatement ; ce qu\'Android signale (mémoire, ANR) apparaît au démarrage suivant.</string>
+    <string name="diag_crash">Plantage (erreur dans l\'application)</string>
+    <string name="diag_crash_native">Plantage (code natif)</string>
+    <string name="diag_anr">Ne répond plus (ANR)</string>
+    <string name="diag_geheugen">Fermée par Android : mémoire insuffisante</string>
+    <string name="diag_signaal">Arrêtée (signal, p. ex. pendant une mise à jour)</string>
+    <string name="diag_gebruiker">Arrêtée par l\'utilisateur ou le système</string>
+    <string name="diag_systeem">Fermée par le système</string>
+    <string name="diag_gevangen">Erreur interceptée (l\'application a continué)</string>
+    <string name="diag_anders">Autre</string>
+    <string name="diag_voorgrond">au premier plan</string>
+
 </resources>

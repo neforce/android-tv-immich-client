@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -301,17 +302,17 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                             Keuze(
                                 selected = false, onClick = { staat.draaiVolgorde() }, modifier = Modifier.focusRequester(eerste),
                                 leadingIcon = { Icon(Icons.Filled.SwapVert, null, Modifier.width(18.dp)) },
-                            ) { Text(stringResource(if (staat.nieuwsteEerst) R.string.nieuwste_eerst else R.string.oudste_eerst)) }
+                            tekst = stringResource(if (staat.nieuwsteEerst) R.string.nieuwste_eerst else R.string.oudste_eerst))
                             Keuze(
                                 selected = false, onClick = { kiezer = true }, modifier = Modifier.focusRequester(datumKnop),
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
-                            ) { Text(stringResource(R.string.ga_naar_datum)) }
+                            tekst = stringResource(R.string.ga_naar_datum))
                         }
                         if (scherm.metHerinneringen && Instellingen.herinneringen) HerinneringenRij(nav)
                     }
                 }
             }
-            Scrubber(staat, huidigeMaand, Modifier.align(Alignment.CenterEnd))
+            TijdlijnBalk(staat, rijen, maandVan, boven, huidigeMaand, Modifier.align(Alignment.CenterEnd))
             AnimatedVisibility(sprongLabel != null, Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
                 Text(
                     sprongLabel.orEmpty(), style = MaterialTheme.typography.displaySmall,
@@ -337,25 +338,53 @@ fun groetTekst(): String? {
     return if (naam != null) stringResource(R.string.groet_met_naam, dagdeel, naam) else dagdeel
 }
 
-/** Maand-label rechts tijdens scrollen, op de plek in de hele tijdlijn (zoals de Immich-scrubber). */
+/**
+ * Scrollbalk van de tijdlijn: plek op basis van de maandaantallen (maanden worden lui geladen, dus de rijen zeggen niets
+ * over het geheel): eerste zichtbare rij → maand → aandeel binnen die maand → fotonummer in het totaal.
+ */
 @Composable
-private fun Scrubber(staat: TijdlijnStaat, maandIndex: Int, modifier: Modifier) {
+private fun TijdlijnBalk(staat: TijdlijnStaat, rijen: List<Rij>, maandVan: IntArray, boven: Int, maandIndex: Int, modifier: Modifier) {
     val lijst = staat.raster.lijst
-    var zichtbaar by remember { mutableStateOf(false) }
-    LaunchedEffect(lijst) {
-        snapshotFlow { lijst.firstVisibleItemIndex }.distinctUntilChanged().collectLatest { zichtbaar = true; delay(1200); zichtbaar = false }
+    val maanden = staat.maanden
+    if (staat.aantal == 0 || maanden.isEmpty()) return
+    // eerste rij-index per maand
+    val maandStart = remember(maandVan) {
+        val uit = IntArray(maanden.size) { maandVan.size }
+        for (r in maandVan.indices.reversed()) uit[maandVan[r]] = r
+        for (m in uit.indices.reversed()) if (uit[m] == maandVan.size && m + 1 < uit.size) uit[m] = uit[m + 1]
+        uit
     }
-    if (staat.aantal == 0) return
-    BoxWithConstraints(modifier.fillMaxHeight().width(220.dp), contentAlignment = Alignment.TopEnd) {
-        val f = staat.beginVan(maandIndex).toFloat() / staat.aantal
-        AnimatedVisibility(zichtbaar, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.offset(y = (maxHeight - 40.dp) * f)) {
-            val m = staat.maanden.getOrNull(maandIndex)
-            Text(
-                m?.let { maandTitel(it.sleutel) }.orEmpty(), style = MaterialTheme.typography.labelLarge, color = Kleur.opPrimair,
-                modifier = Modifier.padding(end = 10.dp).background(Kleur.primair, RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
-            )
+    fun fotoNummer(): Int {
+        val zicht = lijst.layoutInfo.visibleItemsInfo
+        val eerste = zicht.firstOrNull() ?: return 0
+        if (!lijst.canScrollForward) return staat.aantal - 1
+        val deel = if (eerste.size > 0) (-eerste.offset.toFloat() / eerste.size).coerceIn(0f, 1f) else 0f
+        val r = (eerste.index - boven + deel).coerceAtLeast(0f)
+        val m = maandVan.getOrElse(r.toInt()) { 0 }.coerceIn(0, maanden.lastIndex)
+        val start = maandStart[m]
+        val eind = if (m + 1 < maandStart.size) maandStart[m + 1] else maandVan.size
+        val binnen = if (eind > start) ((r - start) / (eind - start)).coerceIn(0f, 1f) else 0f
+        return (staat.beginVan(m) + binnen * maanden[m].aantal).toInt().coerceIn(0, staat.aantal - 1)
+    }
+    // jaartallen langs de baan (nieuwste eerst of oudste eerst: de volgorde van de maanden)
+    val jaren = remember(maanden) {
+        val uit = ArrayList<Pair<Float, String>>()
+        var vorig = ""
+        maanden.forEachIndexed { i, m ->
+            val j = m.sleutel.take(4)
+            if (j != vorig) { vorig = j; if (j.toIntOrNull()?.let { it > 1970 } == true) uit.add(staat.beginVan(i).toFloat() / staat.aantal to j) }
         }
+        uit
     }
+    ScrolBalk(
+        fractie = { fotoNummer().toFloat() / (staat.aantal - 1).coerceAtLeast(1) },
+        beweging = { lijst.firstVisibleItemIndex * 7919 + lijst.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { lijst.canScrollForward || lijst.canScrollBackward },
+        label = { maanden.getOrNull(maandIndex)?.let { maandTitel(it.sleutel) } },
+        sub = { "${Taal.getal(fotoNummer() + 1)} / ${Taal.getal(staat.aantal)}" },
+        markeringen = jaren,
+        modifier = modifier,
+    )
 }
 
 /** Jaar kiezen, daarna maand. */
@@ -395,14 +424,16 @@ private fun DatumKiezer(staat: TijdlijnStaat, sluit: () -> Unit, kies: (Int) -> 
 
 @Composable
 fun Knop(titel: String, sub: String?, modifier: Modifier = Modifier, onKlik: () -> Unit) {
+    // tekstkleur zelf zetten: de kleur uit de typografie wint anders van de contentkleur (lichte tekst op lichtblauw)
+    var focus by remember { mutableStateOf(false) }
     Surface(
-        onClick = onKlik, modifier = modifier.height(64.dp),
+        onClick = onKlik, modifier = modifier.height(64.dp).onFocusChanged { focus = it.isFocused },
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(12.dp)),
         colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlak, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
     ) {
         Column(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalArrangement = Arrangement.Center) {
-            Text(titel, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-            sub?.let { Text(it, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+            Text(titel, style = MaterialTheme.typography.titleMedium, color = if (focus) Kleur.opPrimair else Kleur.tekst, maxLines = 1)
+            sub?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = if (focus) Kleur.opPrimair.copy(alpha = 0.8f) else Kleur.zacht, maxLines = 1) }
         }
     }
 }

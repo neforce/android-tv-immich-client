@@ -72,17 +72,31 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val cacheMaat = stringResource(R.string.cache_maat)
     val cache by produceState<String?>(null, cacheRonde) {
         value = withContext(Dispatchers.IO) {
-            val l = SingletonImageLoader.get(ctx)
-            val schijf = l.diskCache?.size ?: 0L; val geheugen = l.memoryCache?.size ?: 0L
-            cacheMaat.format(Taal.locale, Taal.getal((schijf / 1048576.0).roundToLong()), Taal.getal((geheugen / 1048576.0).roundToLong()))
+            runCatching {
+                val l = SingletonImageLoader.get(ctx)
+                val schijf = l.diskCache?.size ?: 0L; val geheugen = l.memoryCache?.size ?: 0L
+                cacheMaat.format(Taal.locale, Taal.getal((schijf / 1048576.0).roundToLong()), Taal.getal((geheugen / 1048576.0).roundToLong()))
+            }.getOrDefault("?")
         }
     }
+    // screensaver: lagen (uitleg, album-/persoonkeuze) en de toestand (opnieuw gelezen na elke wijziging)
+    var hulp by remember { mutableStateOf(false) }
+    var albumKiezer by remember { mutableStateOf(false) }
+    var persoonKiezer by remember { mutableStateOf(false) }
+    var diagnose by remember { mutableStateOf(false) }
+    var dreamRonde by remember { mutableIntStateOf(0) }
+    val dreamActief = remember(dreamRonde, hulp) { Screensaver.actief(ctx) }
+    val dreamMag = remember(dreamRonde, hulp) { Screensaver.magSchrijven(ctx) }
+    val lijst = androidx.compose.foundation.lazy.rememberLazyListState()
+    val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(30)
         // na een taalwissel (recreate) staat de lijst nog op dezelfde plek: focus terug op de regel Taal, anders de eerste regel
         if (Taal.focusTaal) { Taal.focusTaal = false; repeat(5) { if (runCatching { taalRegel.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) } }
+        // via het tandwieltje bij de screensaver (systeeminstellingen): meteen naar die groep
+        if (Toetsen.naarScreensaver) { Toetsen.naarScreensaver = false; if (SCREENSAVER_AAN) { lijst.scrollToItem(DREAM_ITEM); delay(50); if (runCatching { dreamRegel.requestFocus() }.isSuccess) return@LaunchedEffect } }
         runCatching { eerste.requestFocus() }
     }
     LaunchedEffect(bevestig) { if (bevestig) { delay(6000); bevestig = false } }
@@ -90,6 +104,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
 
     LazyColumn(
         Modifier.fillMaxSize(),
+        state = lijst,
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -104,6 +119,32 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.dia_volgorde_uitleg), listOf(stringResource(R.string.op_datum), stringResource(R.string.willekeurig)), if (Instellingen.diaWillekeurig) 1 else 0) { Instellingen.diaWillekeurig = it == 1 } }
         item { Keuzes(stringResource(R.string.videos), stringResource(R.string.dia_videos_uitleg), listOf(stringResource(R.string.afspelen), stringResource(R.string.overslaan)), if (Instellingen.diaVideos) 0 else 1) { Instellingen.diaVideos = it == 0 } }
         item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
+
+        // ---- Screensaver (item-index DREAM_ITEM = de groepskop; de volgorde hierboven niet veranderen zonder die aan te passen) ----
+        if (SCREENSAVER_AAN) {
+        groep(R.string.groep_screensaver)
+        item {
+            // met schrijfrecht: aan/uit zet het meteen; zonder: OK opent de uitleg (adb, systeeminstellingen)
+            if (dreamMag) Keuzes(stringResource(R.string.screensaver), stringResource(if (dreamActief) R.string.dream_status_aan else R.string.dream_aan_uitleg), uitAan, if (dreamActief) 1 else 0, Modifier.focusRequester(dreamRegel)) {
+                Screensaver.zet(ctx, it == 1); dreamRonde++
+            } else Regel(stringResource(R.string.screensaver), stringResource(if (dreamActief) R.string.dream_status_aan else R.string.dream_status_uit_ok), Modifier.focusRequester(dreamRegel), onKlik = { hulp = true }) { focus ->
+                Text(stringResource(if (dreamActief) R.string.aan else R.string.uit), style = MaterialTheme.typography.titleMedium, color = if (focus) Kleur.opPrimair else Kleur.tekst, modifier = Modifier.padding(end = 10.dp))
+            }
+        }
+        item { Actie(stringResource(R.string.dream_instellen), stringResource(R.string.dream_instellen_uitleg)) { hulp = true } }
+        item { Actie(stringResource(R.string.dream_voorbeeld), stringResource(R.string.dream_voorbeeld_uitleg)) { runCatching { ctx.startActivity(android.content.Intent(ctx, VoorbeeldActivity::class.java)) } } }
+        item { Keuzes(stringResource(R.string.dream_bron), stringResource(R.string.dream_bron_uitleg), DreamBron.entries.map { stringResource(it.label) }, Instellingen.dreamBron.ordinal) { Instellingen.dreamBron = DreamBron.entries[it] } }
+        if (Instellingen.dreamBron == DreamBron.ALBUM) item { Actie(stringResource(R.string.dream_album), Instellingen.dreamAlbumNaam.ifBlank { stringResource(R.string.dream_kies) }) { albumKiezer = true } }
+        if (Instellingen.dreamBron == DreamBron.PERSOON) item { Actie(stringResource(R.string.dream_persoon), Instellingen.dreamPersoonNaam.ifBlank { stringResource(R.string.dream_kies) }) { persoonKiezer = true } }
+        item {
+            val labels = Instellingen.DREAM_TIJDEN.map { if (it >= 60) stringResource(R.string.minuten, it / 60) else stringResource(R.string.seconden, it) }
+            Keuzes(stringResource(R.string.tijd_per_foto), stringResource(R.string.dream_tijd_uitleg), labels, Instellingen.DREAM_TIJDEN.indexOf(Instellingen.dreamSeconden).coerceAtLeast(0)) { Instellingen.dreamSeconden = Instellingen.DREAM_TIJDEN[it] }
+        }
+        schakel(R.string.dream_klok, R.string.dream_klok_uitleg, uitAan, Instellingen.dreamKlok) { Instellingen.dreamKlok = it }
+        schakel(R.string.landkaart, R.string.dream_kaart_uitleg, uitAan, Instellingen.dreamKaart) { Instellingen.dreamKaart = it }
+        schakel(R.string.ken_burns, R.string.dream_ken_burns_uitleg, uitAan, Instellingen.dreamKenBurns) { Instellingen.dreamKenBurns = it }
+        schakel(R.string.dream_info, R.string.dream_info_uitleg, uitAan, Instellingen.dreamInfo) { Instellingen.dreamInfo = it }
+        }
 
         groep(R.string.groep_bekijken)
         item { Keuzes(stringResource(R.string.landkaart), stringResource(R.string.landkaart_uitleg), KaartMaat.entries.map { stringResource(it.label) }, Instellingen.viewerKaart.ordinal) { Instellingen.viewerKaart = KaartMaat.entries[it] } }
@@ -177,11 +218,26 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Info(stringResource(R.string.app_regel, stringResource(Instellingen.uiterlijk.label)), stringResource(R.string.versie, versie)) }
         item { Info(stringResource(R.string.immich_server), immichVersie?.let { stringResource(R.string.versie, it) } ?: "…") }
         item { Info(stringResource(R.string.kaart), stringResource(R.string.kaart_bron, SAT_BRON)) }
+        item { Text(stringResource(R.string.onofficieel_lang), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) }
+        item { Actie(stringResource(R.string.diagnose), stringResource(R.string.diagnose_uitleg)) { diagnose = true } }
+    }
+    if (hulp) ScreensaverHulp { hulp = false; dreamRonde++ }
+    if (diagnose) DiagnoseLaag { diagnose = false }
+    if (albumKiezer) KiesLijst(stringResource(R.string.dream_album), albumKeuzes(), Instellingen.dreamAlbum, sluit = { albumKiezer = false }) { id, naam ->
+        Instellingen.dreamAlbum = id; Instellingen.dreamAlbumNaam = naam; albumKiezer = false
+    }
+    if (persoonKiezer) KiesLijst(stringResource(R.string.dream_persoon), persoonKeuzes(), Instellingen.dreamPersoon, sluit = { persoonKiezer = false }) { id, naam ->
+        Instellingen.dreamPersoon = id; Instellingen.dreamPersoonNaam = naam; persoonKiezer = false
     }
     if (groetInvoer) TekstInvoer(stringResource(R.string.begroeting), Instellingen.groetTekst, actie = stringResource(R.string.actie_klaar), sluit = { groetInvoer = false }) {
         Instellingen.groetTekst = it; groetInvoer = false
     }
 }
+
+/** Item-index van de groepskop "Screensaver" in de lijst: kop (1) + groep Diashow (1 + 5 regels). */
+private const val DREAM_ITEM = 7
+/** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
+const val SCREENSAVER_AAN = true
 
 private fun LazyListScope.groep(@StringRes naam: Int) = item {
     Text(stringResource(naam), style = MaterialTheme.typography.titleLarge, color = Kleur.primair, modifier = Modifier.padding(top = 18.dp, bottom = 4.dp, start = 4.dp))

@@ -372,4 +372,93 @@
     <string name="html_bezig">The TV is checking the server and creating a key. This takes a few seconds.</string>
     <string name="html_geen_verbinding_titel">No connection to the TV</string>
     <string name="html_geen_verbinding">Is the connect screen still open on the TV, and is your phone on the same Wi-Fi network?</string>
+
+    <!-- Unofficial (2.1) -->
+    <string name="onofficieel_kort">Unofficial client for Immich</string>
+    <string name="onofficieel_lang">Unofficial app, not affiliated with or endorsed by the Immich project. Immich is a trademark of its respective owners.</string>
+    <string name="terug_sluit">Press Back to close</string>
+    <string name="minuten">%d min</string>
+
+    <!-- Screensaver (2.1) -->
+    <string name="dream_naam">Photos (screensaver)</string>
+    <string name="groep_screensaver">Screensaver</string>
+    <string name="screensaver">Screensaver</string>
+    <string name="dream_aan_uitleg">Use this app as the screensaver of this device</string>
+    <string name="dream_status_aan">Active: this app is the screensaver of this device</string>
+    <string name="dream_status_uit">Not the screensaver of this device yet</string>
+    <string name="dream_status_uit_ok">Not active yet – press OK to set it up</string>
+    <string name="dream_instellen">Set up on this device</string>
+    <string name="dream_instellen_sub">Android TV usually has no screen to pick a third-party screensaver; here is how it works anyway.</string>
+    <string name="dream_instellen_uitleg">Status, help and the one-time setup (adb)</string>
+    <string name="dream_voorbeeld">Preview</string>
+    <string name="dream_voorbeeld_uitleg">Show the screensaver now; any key closes it</string>
+    <string name="dream_bron">Photos</string>
+    <string name="dream_bron_uitleg">Which photos the screensaver shows (always in random order)</string>
+    <string name="dream_alle_fotos">All photos</string>
+    <string name="dream_album">Album</string>
+    <string name="dream_herinneringen">Today\'s memories</string>
+    <string name="dream_persoon">Person</string>
+    <string name="dream_kies">Not chosen yet – press OK</string>
+    <string name="dream_tijd_uitleg">How long each photo stays on screen (◀ ▶ on the remote: previous / next)</string>
+    <string name="dream_klok">Clock</string>
+    <string name="dream_klok_uitleg">Time and date in the top left corner</string>
+    <string name="dream_kaart_uitleg">Outline of the country with the photo\'s location, bottom right</string>
+    <string name="dream_ken_burns_uitleg">Slowly zoom in on each photo</string>
+    <string name="dream_info">Date and place</string>
+    <string name="dream_info_uitleg">Date, place and album name at the bottom left</string>
+    <string name="dream_geen_fotos">No photos found for this screensaver source</string>
+    <string name="dream_geen_verbinding">No connection to the Immich server; trying again…</string>
+    <string name="dream_niet_gekoppeld">Not connected yet: open the app first</string>
+    <string name="dream_recht_ja">The app may change the screensaver setting itself</string>
+    <string name="dream_recht_nee">The app may not change the screensaver setting yet (one-time permission via adb, see below)</string>
+    <string name="dream_ontw_ja">Developer options are enabled</string>
+    <string name="dream_ontw_nee">Developer options are off</string>
+    <string name="dream_zet_aan">Turn on now</string>
+    <string name="dream_zet_uit">Turn off now</string>
+    <string name="dream_zet_uitleg">The previous screensaver is remembered and restored when you turn this off</string>
+    <string name="dream_open_systeem">Open screensaver settings</string>
+    <string name="dream_open_systeem_uitleg">Pick \"Photos\" in the system settings</string>
+    <string name="dream_auto_kop">Automatic (network debugging)</string>
+    <string name="dream_auto_uitleg">The device connects to its own debug port and sets everything up. Requires Developer options → Network debugging (or \"ADB over network\"). The first time, the TV asks whether to allow debugging: choose Always allow.</string>
+    <string name="dream_auto_knop">Set up automatically</string>
+    <string name="dream_auto_knop_uitleg">Grants the app the permission and makes it the screensaver; takes a few seconds</string>
+    <string name="adb_bezig">Connecting… if the TV asks to allow debugging, choose Always allow</string>
+    <string name="adb_klaar">Done: this app is now the screensaver</string>
+    <string name="adb_mislukt">That didn\'t work; use the manual steps below</string>
+    <string name="adb_geen_verbinding">No connection: turn on Network debugging in Developer options first</string>
+    <string name="adb_geen_toestemming">No permission was given on the TV; try again</string>
+    <string name="dream_hand_kop">Manually, from a computer</string>
+    <string name="dream_stap1">Enable Developer options: Settings → Device Preferences → About → press OK seven times on \"Build\".</string>
+    <string name="dream_stap2">Settings → Device Preferences → Developer options → turn on Network debugging (or USB debugging with a cable).</string>
+    <string name="dream_stap3">On a computer with adb (Android platform tools), run:</string>
+    <string name="dream_stap4">The first time, the TV asks to allow the computer. After the second command the app can turn the screensaver on and off by itself; the last two commands set it right away.</string>
+    <string name="dream_open_over">Open \"About\"</string>
+    <string name="dream_open_over_uitleg">To enable Developer options</string>
+    <string name="dream_open_ontw">Open Developer options</string>
+    <string name="dream_open_ontw_uitleg">To turn on Network debugging</string>
+    <string name="dream_sleutel_fout">The Immich server no longer accepts the key of this device: open the app and choose Reconnect</string>
+    <string name="dream_usb_ja">USB debugging is on</string>
+    <string name="dream_usb_nee">USB debugging is off</string>
+    <string name="dream_net_ja">Network debugging is on (port 5555)</string>
+    <string name="dream_net_nee">Network debugging is off (needed for Set up automatically)</string>
+    <string name="dream_nu">Current screensaver: %1$s</string>
+    <string name="dream_start_na">starts after %1$s without activity</string>
+
+    <!-- Diagnostics (2.1) -->
+    <string name="diagnose">Diagnostics</string>
+    <string name="diagnose_uitleg">Why the app closed last time (stays on this device)</string>
+    <string name="diagnose_sub">The last times the app closed unexpectedly, with the reason. Nothing is sent anywhere.</string>
+    <string name="diagnose_leeg">Nothing recorded: the app hasn\'t closed unexpectedly.</string>
+    <string name="diagnose_voet">Tip: a crash is written here the moment it happens; what Android reports (memory, ANR) appears at the next start.</string>
+    <string name="diag_crash">Crash (error in the app)</string>
+    <string name="diag_crash_native">Crash (native code)</string>
+    <string name="diag_anr">Not responding (ANR)</string>
+    <string name="diag_geheugen">Closed by Android: low memory</string>
+    <string name="diag_signaal">Killed (signal, e.g. during an update)</string>
+    <string name="diag_gebruiker">Stopped by the user or the system</string>
+    <string name="diag_systeem">Closed by the system</string>
+    <string name="diag_gevangen">Error caught (the app kept running)</string>
+    <string name="diag_anders">Other</string>
+    <string name="diag_voorgrond">while in the foreground</string>
+
 </resources>

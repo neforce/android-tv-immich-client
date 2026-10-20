@@ -304,11 +304,7 @@ private fun DiaRing(staat: KijkerStaat) {
         deel.snapTo(0f)
         if (!staat.speeltVideo) deel.animateTo(1f, tween(Instellingen.diaMs.toInt(), easing = LinearEasing))
     }
-    Canvas(Modifier.size(22.dp)) {
-        val dikte = 2.2.dp.toPx()
-        drawCircle(Color(0x38FFFFFF), style = Stroke(dikte))
-        drawArc(Color(0xD9FFFFFF), -90f, 360f * deel.value, false, style = Stroke(dikte, cap = StrokeCap.Round))
-    }
+    VoortgangRing({ deel.value })
 }
 
 @Composable

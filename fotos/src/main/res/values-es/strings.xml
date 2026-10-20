@@ -361,4 +361,93 @@
     <string name="html_bezig">El televisor comprueba el servidor y crea una clave. Tarda unos segundos.</string>
     <string name="html_geen_verbinding_titel">Sin conexión con el televisor</string>
     <string name="html_geen_verbinding">¿Sigue abierta la pantalla de conexión en el televisor, y está tu móvil en la misma red wifi?</string>
+
+    <!-- No oficial (2.1) -->
+    <string name="onofficieel_kort">Cliente no oficial para Immich</string>
+    <string name="onofficieel_lang">Aplicación no oficial, sin relación con el proyecto Immich ni respaldada por él. Immich es una marca de sus respectivos propietarios.</string>
+    <string name="terug_sluit">Atrás cierra esta pantalla</string>
+    <string name="minuten">%d min</string>
+
+    <!-- Salvapantallas (2.1) -->
+    <string name="dream_naam">Fotos (salvapantallas)</string>
+    <string name="groep_screensaver">Salvapantallas</string>
+    <string name="screensaver">Salvapantallas</string>
+    <string name="dream_aan_uitleg">Usar esta aplicación como salvapantallas de este dispositivo</string>
+    <string name="dream_status_aan">Activo: esta aplicación es el salvapantallas de este dispositivo</string>
+    <string name="dream_status_uit">Todavía no es el salvapantallas de este dispositivo</string>
+    <string name="dream_status_uit_ok">Todavía no está activo: pulsa OK para configurarlo</string>
+    <string name="dream_instellen">Configurar en este dispositivo</string>
+    <string name="dream_instellen_sub">Android TV normalmente no tiene una pantalla para elegir otro salvapantallas; así se hace de todos modos.</string>
+    <string name="dream_instellen_uitleg">Estado, ayuda y la configuración única (adb)</string>
+    <string name="dream_voorbeeld">Vista previa</string>
+    <string name="dream_voorbeeld_uitleg">Mostrar el salvapantallas ahora; cualquier tecla lo cierra</string>
+    <string name="dream_bron">Fotos</string>
+    <string name="dream_bron_uitleg">Qué fotos muestra el salvapantallas (siempre en orden aleatorio)</string>
+    <string name="dream_alle_fotos">Todas las fotos</string>
+    <string name="dream_album">Álbum</string>
+    <string name="dream_herinneringen">Recuerdos de hoy</string>
+    <string name="dream_persoon">Persona</string>
+    <string name="dream_kies">Todavía sin elegir: pulsa OK</string>
+    <string name="dream_tijd_uitleg">Cuánto tiempo se muestra cada foto (◀ ▶ en el mando: anterior / siguiente)</string>
+    <string name="dream_klok">Reloj</string>
+    <string name="dream_klok_uitleg">Hora y fecha arriba a la izquierda</string>
+    <string name="dream_kaart_uitleg">Contorno del país con el lugar de la foto, abajo a la derecha</string>
+    <string name="dream_ken_burns_uitleg">Acercar lentamente cada foto</string>
+    <string name="dream_info">Fecha y lugar</string>
+    <string name="dream_info_uitleg">Fecha, lugar y nombre del álbum abajo a la izquierda</string>
+    <string name="dream_geen_fotos">No se encontraron fotos para esta fuente del salvapantallas</string>
+    <string name="dream_geen_verbinding">Sin conexión con el servidor Immich; reintentando…</string>
+    <string name="dream_niet_gekoppeld">Todavía no está conectado: abre primero la aplicación</string>
+    <string name="dream_recht_ja">La aplicación puede cambiar por sí misma el ajuste del salvapantallas</string>
+    <string name="dream_recht_nee">La aplicación todavía no puede cambiar el ajuste del salvapantallas (permiso único mediante adb, ver abajo)</string>
+    <string name="dream_ontw_ja">Las opciones de desarrollador están activadas</string>
+    <string name="dream_ontw_nee">Las opciones de desarrollador están desactivadas</string>
+    <string name="dream_zet_aan">Activar ahora</string>
+    <string name="dream_zet_uit">Desactivar ahora</string>
+    <string name="dream_zet_uitleg">El salvapantallas anterior se recuerda y se restaura al desactivar este</string>
+    <string name="dream_open_systeem">Abrir los ajustes del salvapantallas</string>
+    <string name="dream_open_systeem_uitleg">Elige «Fotos» en los ajustes del sistema</string>
+    <string name="dream_auto_kop">Automático (depuración por red)</string>
+    <string name="dream_auto_uitleg">El dispositivo se conecta a su propio puerto de depuración y lo configura todo él mismo. Requiere Opciones de desarrollador → Depuración por red (o «ADB por red»). La primera vez, el televisor pregunta si permitir la depuración: elige Permitir siempre.</string>
+    <string name="dream_auto_knop">Configurar automáticamente</string>
+    <string name="dream_auto_knop_uitleg">Concede el permiso a la aplicación y la convierte en el salvapantallas; tarda unos segundos</string>
+    <string name="adb_bezig">Conectando… si el televisor pide permitir la depuración: elige Permitir siempre</string>
+    <string name="adb_klaar">Listo: esta aplicación es ahora el salvapantallas</string>
+    <string name="adb_mislukt">No ha funcionado; usa los pasos manuales de abajo</string>
+    <string name="adb_geen_verbinding">Sin conexión: activa primero la depuración por red en las opciones de desarrollador</string>
+    <string name="adb_geen_toestemming">No se dio permiso en el televisor; inténtalo de nuevo</string>
+    <string name="dream_hand_kop">Manualmente, desde un ordenador</string>
+    <string name="dream_stap1">Activar las opciones de desarrollador: Ajustes → Preferencias del dispositivo → Información → pulsa OK siete veces en «Compilación».</string>
+    <string name="dream_stap2">Ajustes → Preferencias del dispositivo → Opciones de desarrollador → activa la depuración por red (o la depuración USB con un cable).</string>
+    <string name="dream_stap3">En un ordenador con adb (Android platform tools), ejecuta:</string>
+    <string name="dream_stap4">La primera vez, el televisor pide permitir el ordenador. Tras el segundo comando, la aplicación puede activar y desactivar el salvapantallas por sí misma; los dos últimos comandos lo configuran de inmediato.</string>
+    <string name="dream_open_over">Abrir «Información»</string>
+    <string name="dream_open_over_uitleg">Para activar las opciones de desarrollador</string>
+    <string name="dream_open_ontw">Abrir las opciones de desarrollador</string>
+    <string name="dream_open_ontw_uitleg">Para activar la depuración por red</string>
+    <string name="dream_sleutel_fout">El servidor Immich ya no acepta la clave de este dispositivo: abre la aplicación y elige Volver a conectar</string>
+    <string name="dream_usb_ja">La depuración USB está activada</string>
+    <string name="dream_usb_nee">La depuración USB está desactivada</string>
+    <string name="dream_net_ja">La depuración por red está activada (puerto 5555)</string>
+    <string name="dream_net_nee">La depuración por red está desactivada (necesaria para «Configurar automáticamente»)</string>
+    <string name="dream_nu">Salvapantallas actual: %1$s</string>
+    <string name="dream_start_na">se inicia tras %1$s sin actividad</string>
+
+    <!-- Diagnóstico (2.1) -->
+    <string name="diagnose">Diagnóstico</string>
+    <string name="diagnose_uitleg">Por qué se cerró la aplicación la última vez (se queda en este dispositivo)</string>
+    <string name="diagnose_sub">Las últimas veces que la aplicación se cerró inesperadamente, con el motivo. No se envía nada.</string>
+    <string name="diagnose_leeg">Nada registrado: la aplicación no se ha cerrado inesperadamente.</string>
+    <string name="diagnose_voet">Consejo: un fallo se anota aquí al instante; lo que informa Android (memoria, ANR) aparece en el siguiente inicio.</string>
+    <string name="diag_crash">Fallo (error en la aplicación)</string>
+    <string name="diag_crash_native">Fallo (código nativo)</string>
+    <string name="diag_anr">No responde (ANR)</string>
+    <string name="diag_geheugen">Cerrada por Android: poca memoria</string>
+    <string name="diag_signaal">Terminada (señal, p. ej. durante una actualización)</string>
+    <string name="diag_gebruiker">Detenida por el usuario o el sistema</string>
+    <string name="diag_systeem">Cerrada por el sistema</string>
+    <string name="diag_gevangen">Error capturado (la aplicación siguió funcionando)</string>
+    <string name="diag_anders">Otro</string>
+    <string name="diag_voorgrond">en primer plano</string>
+
 </resources>

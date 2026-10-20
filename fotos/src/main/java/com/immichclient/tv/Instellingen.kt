@@ -85,6 +85,22 @@ object Instellingen {
     var accent by keuze("accent", Accent.BLAUW)
     var uiterlijk by keuze("uiterlijk", Uiterlijk.FOTOS, perApparaat = true)
 
+    // ---- Screensaver (DreamService, zie Dream.kt) ----
+    var dreamBron by keuze("dream_bron", DreamBron.ALLES)
+    var dreamAlbum by tekst("dream_album", "")
+    var dreamAlbumNaam by tekst("dream_album_naam", "")
+    var dreamPersoon by tekst("dream_persoon", "")
+    var dreamPersoonNaam by tekst("dream_persoon_naam", "")
+    var dreamSeconden by getal("dream_s", 15)
+    val DREAM_TIJDEN = listOf(5, 8, 10, 15, 20, 30, 45, 60, 120)
+    var dreamKlok by bool("dream_klok", true)
+    var dreamKaart by bool("dream_kaart", true)
+    var dreamKenBurns by bool("dream_ken_burns", true)
+    /** datum/plaats (en albumnaam) linksonder */
+    var dreamInfo by bool("dream_info", true)
+    /** screensaver die er stond vóór deze app werd ingesteld (om bij "uit" terug te zetten); per apparaat */
+    var dreamVorige by tekst("dream_vorige", "", perApparaat = true)
+
     /** Prefs lezen voor dit account; [kijker] = profiel met een eigen account, anders het algemene account. */
     fun laad(c: Context, kijker: String?) {
         val p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -110,6 +126,11 @@ enum class KaartStart(@StringRes val label: Int) { WERELD(R.string.hele_wereld),
 /** Schaal op de clusterstraal en het diepste zoomniveau (zie Wereldkaart.kt: 14 ≈ 400 m per cluster op 52° breedte). */
 enum class ClusterNiveau(@StringRes val label: Int, val straal: Float, val maxZoom: Double) { FIJN(R.string.fijn, 0.7f, 16.0), NORMAAL(R.string.normaal_cluster, 1f, 14.0), GROF(R.string.grof, 1.5f, 12.0) }
 enum class KaartStijl(@StringRes val label: Int) { DONKER(R.string.donker), LICHT(R.string.licht), SATELLIET(R.string.satelliet) }
+/** Waar de screensaver zijn foto's vandaan haalt. */
+enum class DreamBron(@StringRes val label: Int) {
+    ALLES(R.string.dream_alle_fotos), ALBUM(R.string.dream_album), FAVORIETEN(R.string.sectie_favorieten),
+    HERINNERINGEN(R.string.dream_herinneringen), PERSOON(R.string.dream_persoon),
+}
 
 /** Accentkleur door de hele app (Kleur.primair e.d. lezen deze). */
 enum class Accent(@StringRes val label: Int, val primair: Color, val donker: Color, val opPrimair: Color) {

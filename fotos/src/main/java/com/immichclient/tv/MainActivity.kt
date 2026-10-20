@@ -59,6 +59,7 @@ import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import okio.Path.Companion.toOkioPath
 
@@ -67,6 +68,7 @@ class App : Application(), SingletonImageLoader.Factory {
         super.onCreate()
         Taal.start(this)
         Immich.kiesAccount(this, null)
+        Diagnose.start(this)
     }
 
     /**
@@ -122,7 +124,11 @@ class Nav(
 }
 
 /** Signalen van toetsen die de activity afvangt (Terug lang ingedrukt). */
-object Toetsen { var langeTerug by androidx.compose.runtime.mutableIntStateOf(0) }
+object Toetsen {
+    var langeTerug by androidx.compose.runtime.mutableIntStateOf(0)
+    /** geopend via het tandwieltje van de screensaver (alias ScreensaverInstellingen): naar die groep scrollen */
+    @Volatile var naarScreensaver = false
+}
 
 enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     FOTOS(R.string.sectie_fotos, Icons.Filled.Photo),
@@ -158,8 +164,12 @@ class MainActivity : ComponentActivity() {
         // test: `am start … --ei test_index 91` opent de viewer meteen op die foto in de tijdlijn
         val testIndex = if (test) intent.getIntExtra("test_index", -1) else -1
         // test: `--es sectie KAART` opent meteen die sectie; anders het ingestelde startscherm
+        // via het tandwieltje bij de screensaver in de systeeminstellingen (alias .ScreensaverInstellingen, zie dream.xml)
+        val vanScreensaver = intent.component?.className?.endsWith(".ScreensaverInstellingen") == true
+        if (vanScreensaver) Toetsen.naarScreensaver = true
         val startSectie = intent.getStringExtra("sectie")?.takeIf { test }?.let { s -> Sectie.entries.firstOrNull { it.name == s } }
             ?: Taal.herstartSectie?.also { Taal.herstartSectie = null } // na een taalwissel terug in Instellingen
+            ?: Sectie.INSTELLINGEN.takeIf { vanScreensaver }
             ?: Instellingen.start
         // test: `--ez instel_test true` toont het instelscherm zonder de bestaande koppeling te wissen
         val instelTest = test && intent.getBooleanExtra("instel_test", false)
@@ -169,6 +179,7 @@ class MainActivity : ComponentActivity() {
             kaartTexture = intent.getBooleanExtra("kaart_texture", false); kaartLod = intent.getIntExtra("kaart_lod", kaartLod)
             kaartFps = intent.getIntExtra("kaart_fps", 0); kaartAlles = intent.getBooleanExtra("kaart_alles", false)
             kaartRes = intent.getIntExtra("kaart_res", kaartRes); kaartVlucht = intent.getIntExtra("kaart_vlucht", kaartVlucht)
+            scrolBalkUit = intent.getBooleanExtra("geen_balk", false)
         }
         setContent { FotosThema { FotosApp(finish = ::finish, herstart = ::recreate, testIndex = testIndex, startSectie = startSectie, instelTest = instelTest, taalTest = taalTest) } }
     }
@@ -219,7 +230,14 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         InstelScherm(test = instelTest && !instellen, terug = if (gekoppeld) ({ instellen = false }) else null, klaar = { instellen = false; herstart() }, finish = finish)
         return
     }
-    val scope = rememberCoroutineScope()
+    // Eén scope voor alle schermstaten, met een CoroutineExceptionHandler: een onverwachte fout in een coroutine (de
+    // meeste zijn al met runCatching afgedekt) sluit dan niet de hele app, maar komt in de diagnose terecht.
+    val scope = remember {
+        CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main.immediate + kotlinx.coroutines.CoroutineExceptionHandler { _, e ->
+            Log.e("Fotos", "coroutine", e); Diagnose.noteer("coroutine", e)
+        })
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { scope.cancel() } }
     androidx.compose.runtime.LaunchedEffect(Unit) { Immich.warmZoeken() }
     val wortels = remember { HashMap<Sectie, Scherm>() }
     var sectie by remember { mutableStateOf(startSectie) }
