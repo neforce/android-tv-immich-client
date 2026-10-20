@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- MapLibre kijkt of er netwerk is (ConnectivityReceiver) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <application
+        android:name=".App"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_fotos"
+        android:banner="@drawable/banner"
+        android:theme="@style/Theme.Photos"
+        android:usesCleartextTraffic="true">
+
+        <!-- De activity zelf staat niet in de launcher: dat doen de aliassen hieronder (naam + icoon + banner per
+             "uiterlijk", zie Instellingen.kt/Uiterlijk). Precies één alias staat aan; standaard "Photos". Labels en
+             banners zijn vertaald (values-xx, drawable-xx-nodpi) en volgen de systeemtaal van de launcher. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
+        <activity-alias android:name=".Fotos" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true"
+            android:label="@string/alias_fotos" android:icon="@mipmap/ic_fotos" android:banner="@drawable/banner">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".Fotoalbum" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:label="@string/alias_album" android:icon="@mipmap/ic_album" android:banner="@drawable/banner_album">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".Herinneringen" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:label="@string/alias_herinneringen" android:icon="@mipmap/ic_herinneringen" android:banner="@drawable/banner_herinneringen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".Familie" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:label="@string/alias_familie" android:icon="@mipmap/ic_familie" android:banner="@drawable/banner_familie">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Sleutel + server zetten via adb zonder de app te openen (zie SleutelOntvanger). DUMP heeft alleen de shell/het
+             systeem, geen gewone app. -->
+        <receiver
+            android:name=".SleutelOntvanger"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.immichclient.tv.SET_KEY" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

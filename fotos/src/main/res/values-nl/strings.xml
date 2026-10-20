@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Foto\'s</string>
+    <string name="alias_fotos">Foto\'s</string>
+    <string name="alias_album">Fotoalbum</string>
+    <string name="alias_herinneringen">Herinneringen</string>
+    <string name="alias_familie">Familiefoto\'s</string>
+    <string name="uiterlijk_fotos">Blauw, gestapelde foto\'s (standaard)</string>
+    <string name="uiterlijk_album">Warm oranje, opengeslagen album</string>
+    <string name="uiterlijk_herinneringen">Paars, foto met ster</string>
+    <string name="uiterlijk_familie">Groen, foto met hartje</string>
+
+    <string name="patroon_maand_jaar">MMMM yyyy</string>
+    <string name="patroon_maand_kort">MMM yyyy</string>
+    <string name="patroon_dag_kort">EEE d MMM</string>
+    <string name="patroon_dag_jaar">EEE d MMM yyyy</string>
+    <string name="patroon_dag_lang">EEEE d MMMM yyyy</string>
+    <string name="patroon_tijd">HH:mm</string>
+
+    <string name="taal_titel">Kies je taal</string>
+    <string name="taal_sub">Later aan te passen via Instellingen → Taal.</string>
+
+    <string name="sectie_fotos">Foto\'s</string>
+    <string name="sectie_herinneringen">Herinneringen</string>
+    <string name="sectie_zoeken">Zoeken</string>
+    <string name="sectie_verkennen">Verkennen</string>
+    <string name="sectie_kaart">Kaart</string>
+    <string name="sectie_albums">Albums</string>
+    <string name="sectie_favorieten">Favorieten</string>
+    <string name="sectie_instellingen">Instellingen</string>
+
+    <string name="laden">Laden…</string>
+    <string name="vandaag">Vandaag</string>
+    <string name="gisteren">Gisteren</string>
+    <string name="geen_datum">Geen datum</string>
+    <string name="persoon">Persoon</string>
+    <plurals name="items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="fotos">
+        <item quantity="one">%s foto</item>
+        <item quantity="other">%s foto\'s</item>
+    </plurals>
+    <plurals name="jaren_geleden">
+        <item quantity="one">%d jaar geleden</item>
+        <item quantity="other">%d jaar geleden</item>
+    </plurals>
+
+    <string name="nieuwste_eerst">Nieuwste eerst</string>
+    <string name="oudste_eerst">Oudste eerst</string>
+    <string name="ga_naar_datum">Ga naar datum</string>
+    <string name="ga_naar_jaar">Ga naar jaar</string>
+    <string name="immich_onbereikbaar">Immich niet bereikbaar</string>
+    <string name="nog_geen_favorieten">Nog geen favorieten</string>
+    <string name="nog_geen_fotos">Nog geen foto\'s</string>
+    <string name="favorieten_tip">Markeer foto\'s in Immich met het hartje, dan staan ze hier.</string>
+    <string name="groet_morgen">Goedemorgen</string>
+    <string name="groet_middag">Goedemiddag</string>
+    <string name="groet_avond">Goedenavond</string>
+    <string name="groet_nacht">Goedenacht</string>
+    <string name="groet_met_naam">%1$s, %2$s</string>
+
+    <string name="herinneringen_sub">Op deze dag, in vorige jaren</string>
+    <string name="geen_herinneringen">Deze week geen herinneringen</string>
+
+    <string name="diashow">Diashow</string>
+    <string name="diashow_pauze">Diashow gepauzeerd</string>
+    <string name="video_fout">Video kan niet worden afgespeeld</string>
+    <string name="info">Info</string>
+    <string name="hint_info_kaart">"OK toon op kaart   ·   ◀ ▶ bladeren   ·   ⏩ 10 verder"</string>
+    <string name="hint_info">"◀ ▶ bladeren   ·   OK diashow   ·   ⏩ 10 verder"</string>
+
+    <string name="zoeken">Zoeken</string>
+    <string name="zoeken_titel">Zoeken: %s</string>
+    <string name="zoek_hint">Zoek op wat er op de foto staat: strand, verjaardag, hond in de sneeuw…</string>
+    <string name="spraak">Spraak</string>
+    <string name="spraak_prompt">Wat zoek je?</string>
+    <string name="modus_slim">Slim zoeken</string>
+    <string name="modus_tekst">Tekst op foto</string>
+    <string name="modus_naam">Bestandsnaam</string>
+    <string name="type_alles">Alles</string>
+    <string name="type_fotos">Foto\'s</string>
+    <string name="type_videos">Video\'s</string>
+    <string name="volg_relevantie">Beste resultaten</string>
+    <string name="volg_nieuw">Nieuwste</string>
+    <string name="volg_oud">Oudste</string>
+    <string name="zoeken_bezig">Zoeken…</string>
+    <string name="zoeken_mislukt">Zoeken mislukt: %s</string>
+    <string name="niets_gevonden">Niets gevonden</string>
+    <plurals name="resultaten">
+        <item quantity="one">%s resultaat</item>
+        <item quantity="other">%s resultaten</item>
+    </plurals>
+    <string name="recent_gezocht">Recent gezocht</string>
+    <string name="probeer">Probeer</string>
+    <string name="personen">Personen</string>
+    <string-array name="suggesties">
+        <item>strand</item>
+        <item>sneeuw</item>
+        <item>verjaardag</item>
+        <item>zonsondergang</item>
+        <item>kerstboom</item>
+        <item>bergen</item>
+        <item>hond</item>
+        <item>taart</item>
+        <item>zwembad</item>
+        <item>eten</item>
+    </string-array>
+    <string name="toets_spatie">spatie</string>
+    <string name="toets_wissen">wissen</string>
+    <string name="actie_zoeken">Zoeken</string>
+    <string name="actie_klaar">Klaar</string>
+    <string name="laden_mislukt">Laden mislukt: %s</string>
+
+    <string name="albums">Albums</string>
+    <plurals name="albums_aantal">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
+    <string name="albums_met">met \"%s\"</string>
+    <string name="volg_recent">Laatst bijgewerkt</string>
+    <string name="volg_nieuwste_fotos">Nieuwste foto\'s</string>
+    <string name="volg_naam">Naam</string>
+    <string name="volg_aantal">Aantal</string>
+    <string name="gedeeld">Gedeeld</string>
+    <string name="gedeeld_klein">gedeeld</string>
+    <string name="zoek_album">Zoek album</string>
+    <string name="albums_niet_geladen">Albums niet geladen</string>
+
+    <string name="verkennen">Verkennen</string>
+    <string name="niet_geladen">Niet geladen</string>
+    <string name="plaatsen">Plaatsen</string>
+
+    <string name="kaart">Kaart</string>
+    <string name="kaart_niet_geladen">Niet geladen: %s</string>
+    <plurals name="fotos_met_locatie">
+        <item quantity="one">%s foto met locatie</item>
+        <item quantity="other">%s foto\'s met locatie</item>
+    </plurals>
+    <string name="kaart_geen_achtergrond">Kaartachtergrond niet beschikbaar (geen internet)</string>
+    <string name="kaart_hint">"◀▶▲▼ kiezen / schuiven   ·   OK inzoomen / openen   ·   ⏪︎⏩︎ zoomen   ·   Terug: hele wereld, nog eens: sluiten   ·   Terug lang ingedrukt: menu"</string>
+
+    <string name="instellingen">Instellingen</string>
+    <string name="instellingen_sub">"◀ ▶ of OK: waarde kiezen   ·   Terug lang ingedrukt: menu   ·   INFO: toetsen"</string>
+    <string name="uit">Uit</string>
+    <string name="aan">Aan</string>
+    <string name="groep_diashow">Diashow</string>
+    <string name="tijd_per_foto">Tijd per foto</string>
+    <string name="tijd_per_foto_uitleg">Hoe lang elke foto in beeld blijft</string>
+    <string name="seconden">%d s</string>
+    <string name="seconden_s">%s s</string>
+    <string name="ken_burns">Ken Burns-effect</string>
+    <string name="ken_burns_uitleg">Langzaam inzoomen tijdens de diashow</string>
+    <string name="volgorde">Volgorde</string>
+    <string name="dia_volgorde_uitleg">Op datum verder, of steeds een willekeurige foto</string>
+    <string name="op_datum">Op datum</string>
+    <string name="willekeurig">Willekeurig</string>
+    <string name="videos">Video\'s</string>
+    <string name="dia_videos_uitleg">Video\'s in de diashow afspelen of overslaan</string>
+    <string name="afspelen">Afspelen</string>
+    <string name="overslaan">Overslaan</string>
+    <string name="overgang">Overgang</string>
+    <string name="overgang_uitleg">Hoe de volgende foto in beeld komt</string>
+    <string name="vervagen">Vervagen</string>
+    <string name="schuiven">Schuiven</string>
+    <string name="groep_bekijken">Foto bekijken</string>
+    <string name="landkaart">Landkaart op de foto</string>
+    <string name="landkaart_uitleg">Contour van het land met de plek van de foto, rechtsonder</string>
+    <string name="klein">Klein</string>
+    <string name="groot">Groot</string>
+    <string name="datum_plaats">Datum en plaats</string>
+    <string name="datum_plaats_uitleg">Balk onderin verbergen na een paar seconden, of altijd laten staan</string>
+    <string name="altijd_tonen">Altijd tonen</string>
+    <string name="teller">Teller</string>
+    <string name="teller_uitleg">\"68 / %s\" bij de datum</string>
+    <string name="groep_tijdlijn">Tijdlijn</string>
+    <string name="grootte">Grootte van de foto\'s</string>
+    <string name="grootte_uitleg">Rijhoogte in het overzicht</string>
+    <string name="normaal_cluster">Normaal</string>
+    <string name="normaal">Normaal</string>
+    <string name="tijdlijn_volgorde_uitleg">Standaard bij het openen (de knop bovenaan de tijdlijn draait hem tijdelijk om)</string>
+    <string name="partner">Foto\'s van partner</string>
+    <string name="partner_uitleg">Foto\'s die een partner in Immich met je deelt ook tonen</string>
+    <string name="herinneringen_boven">Herinneringen bovenaan</string>
+    <string name="herinneringen_boven_uitleg">Rij \"Op deze dag\" boven de tijdlijn</string>
+    <string name="startscherm">Startscherm</string>
+    <string name="startscherm_uitleg">Welke sectie opent bij het starten van de app</string>
+    <string name="begroeting">Begroeting</string>
+    <string name="begroeting_uitleg">Bovenaan de tijdlijn: \"%s\" of een eigen tekst</string>
+    <string name="automatisch">Automatisch</string>
+    <string name="eigen_tekst">Eigen tekst</string>
+    <string name="nog_niets">Nog niets ingevuld – druk op OK</string>
+    <string name="groep_kaart">Kaart</string>
+    <string name="startweergave">Startweergave</string>
+    <string name="startweergave_uitleg">Waar de wereldkaart opent</string>
+    <string name="hele_wereld">Hele wereld</string>
+    <string name="europa">Europa</string>
+    <string name="land_meeste">Land met de meeste foto\'s</string>
+    <string name="laatst_bekeken">Laatst bekeken plek</string>
+    <string name="clusterniveau">Clusterniveau</string>
+    <string name="cluster_uitleg">Fijn: meer, kleinere groepjes en dieper inzoomen; grof: minder, grotere groepen</string>
+    <string name="fijn">Fijn</string>
+    <string name="grof">Grof</string>
+    <string name="kaartstijl">Kaartstijl</string>
+    <string name="kaartstijl_uitleg">Donker of licht (Immich), of satelliet (Sentinel-2 van EOX, met wegen en namen)</string>
+    <string name="donker">Donker</string>
+    <string name="licht">Licht</string>
+    <string name="satelliet">Satelliet</string>
+    <string name="groep_uiterlijk">Uiterlijk</string>
+    <string name="taal">Taal</string>
+    <string name="taal_uitleg">Taal van de app; geldt meteen</string>
+    <string name="accentkleur">Accentkleur</string>
+    <string name="accent_uitleg">Kleur van de focus, knoppen en titels</string>
+    <string name="kleur_blauw">Blauw</string>
+    <string name="kleur_groen">Groen</string>
+    <string name="kleur_oranje">Oranje</string>
+    <string name="kleur_roze">Roze</string>
+    <string name="kleur_paars">Paars</string>
+    <string name="kleur_grijs">Grijs</string>
+    <string name="naam_icoon">Naam en icoon</string>
+    <string name="naam_icoon_uitleg">%s. Geldt ook voor de tegel in de launcher (die werkt binnen enkele seconden bij)</string>
+    <string name="groep_opslag">Opslag</string>
+    <string name="cache_legen">Beeldcache legen</string>
+    <string name="cache_maat">"%1$s MB op schijf  ·  %2$s MB in het geheugen"</string>
+    <string name="groep_account">Account</string>
+    <string name="immich_server">Immich-server</string>
+    <string name="ingelogd_als">Ingelogd als</string>
+    <string name="opnieuw_koppelen">Opnieuw koppelen</string>
+    <string name="opnieuw_koppelen_uitleg">Andere server of ander account</string>
+    <string name="ontkoppelen">Ontkoppelen</string>
+    <string name="ontkoppelen_uitleg">Sleutel van deze tv wissen; de sleutel zelf verwijder je in Immich onder Account-instellingen → API-sleutels</string>
+    <string name="zeker_weten">Zeker weten?</string>
+    <string name="zeker_weten_uitleg">Druk nogmaals op OK om de sleutel van deze tv te wissen</string>
+    <string name="groep_over">Over</string>
+    <string name="toetsen">Toetsen</string>
+    <string name="toetsen_uitleg">Overzicht van alle sneltoetsen (ook met de INFO-toets)</string>
+    <string name="app_regel">%s-app</string>
+    <string name="versie">versie %s</string>
+    <string name="kaart_bron">© OpenStreetMap · Protomaps via tiles.immich.cloud; satelliet: %s, CC BY-NC-SA 4.0</string>
+
+    <string name="toetsen_sluit">Druk op een willekeurige toets om dit te sluiten</string>
+    <string name="tg_overal">Overal</string>
+    <string name="t_terug_lang">Terug lang ingedrukt</string>
+    <string name="t_terug_lang_wat">menu met de secties (ook MENU, als je afstandsbediening die heeft)</string>
+    <string name="t_info">INFO</string>
+    <string name="t_info_wat">dit overzicht</string>
+    <string name="t_links_rand">◀ aan de linkerrand</string>
+    <string name="t_links_rand_wat">menu</string>
+    <string name="t_terug">Terug</string>
+    <string name="t_terug_wat">een stap terug; op het startscherm: app sluiten</string>
+    <string name="tg_tijdlijn">Tijdlijn, albums, zoeken</string>
+    <string name="t_pijlen">▲ ▼ ◀ ▶</string>
+    <string name="t_pijlen_wat">foto kiezen</string>
+    <string name="t_ok">OK</string>
+    <string name="t_ok_open">foto openen</string>
+    <string name="t_play">Play/pauze</string>
+    <string name="t_play_wat">diashow vanaf de gekozen foto</string>
+    <string name="t_spoel">⏪︎ ⏩︎</string>
+    <string name="t_spoel_maand">een maand terug / verder</string>
+    <string name="t_terug_boven">naar boven, nog eens: app sluiten</string>
+    <string name="tg_instellingen">Instellingen</string>
+    <string name="t_links_rechts">◀ ▶</string>
+    <string name="t_waarde">waarde terug / verder</string>
+    <string name="t_ok_waarde">volgende waarde, of uitvoeren</string>
+    <string name="tg_viewer">Foto bekijken</string>
+    <string name="t_vorige_volgende">vorige / volgende</string>
+    <string name="t_ok_play">"OK  of  Play/pauze"</string>
+    <string name="t_diashow_wat">diashow aan/uit (bij een video: pauze)</string>
+    <string name="t_info_toets">"▲ ▼  of  INFO"</string>
+    <string name="t_info_paneel">info (camera, plaats, kaart)</string>
+    <string name="t_ok_info">OK bij info</string>
+    <string name="t_ok_info_wat">toon op de wereldkaart (foto met plek)</string>
+    <string name="t_spoel_viewer">10 foto\'s terug / verder; in een video 10 s</string>
+    <string name="t_sluiten">sluiten</string>
+    <string name="tg_kaart">Wereldkaart</string>
+    <string name="t_kaart_pijlen">groep kiezen, of de kaart schuiven</string>
+    <string name="t_kaart_ok">inzoomen op de groep; valt hij niet meer uiteen: openen</string>
+    <string name="t_kaart_zoom">uitzoomen / inzoomen</string>
+    <string name="t_kaart_terug">hele wereld; nog eens: startscherm</string>
+    <string name="t_kaart_links">◀ op wereldniveau</string>
+
+    <string name="koppel_titel">Koppel met je Immich</string>
+    <string name="koppel_test">Testmodus: de huidige koppeling blijft staan tot dit lukt</string>
+    <string name="koppel_eenmalig">Eenmalig, daarna werkt alles vanzelf</string>
+    <string name="stap1">Scan de QR-code met je telefoon</string>
+    <string name="stap1_sub">Je telefoon moet op hetzelfde wifi-netwerk zitten als deze tv.</string>
+    <string name="stap2">Vul het adres van je Immich-server in, plus je e-mailadres en wachtwoord</string>
+    <string name="stap2_sub">De tv maakt dan zelf een leessleutel aan; je wachtwoord wordt niet bewaard.</string>
+    <string name="stap3">Klaar</string>
+    <string name="stap3_sub">Leg je telefoon weg: de foto\'s verschijnen vanzelf.</string>
+    <string name="wacht_telefoon">Wacht op je telefoon…</string>
+    <string name="klaar_titel">Klaar! Je kunt je telefoon wegleggen.</string>
+    <string name="gekoppeld_als">Gekoppeld als %1$s op %2$s</string>
+    <string name="koppel_mislukt">Koppelen is niet gelukt</string>
+    <string name="probeer_opnieuw">Probeer het opnieuw op je telefoon.</string>
+    <string name="geen_netwerk">Geen netwerk</string>
+    <string name="typ_adres">Of typ dit adres in je browser:</string>
+
+    <string name="fout_geen_netwerk">Geen netwerkverbinding. Sluit de box aan op wifi of een netwerkkabel.</string>
+    <string name="fout_geen_poort">Kan geen poort openen.</string>
+    <string name="geen_toegang">Geen toegang</string>
+    <string name="geen_toegang_html">Geen toegang.&lt;br&gt;Scan de QR-code op de tv.</string>
+    <string name="mislukt">Mislukt</string>
+    <string name="fout_app_inactief">De app is niet meer actief.</string>
+    <string name="fout_vul_adres">Vul het adres van je Immich-server in.</string>
+    <string name="fout_vul_email">Vul je e-mailadres en wachtwoord in.</string>
+    <string name="bezig_sleutel_rechten">Sleutel en rechten controleren…</string>
+    <string name="gekoppeld_melding">Gekoppeld als %1$s op %2$s.</string>
+    <string name="er_ging_iets_mis">Er ging iets mis: %s</string>
+    <string name="fout_ssl">Beveiligde verbinding met %s mislukt (certificaat). Probeer het adres met http:// of controleer het certificaat.</string>
+    <string name="fout_host">Het adres %s is niet gevonden. Controleer de spelling.</string>
+    <string name="fout_verbinding">Geen verbinding met %1$s:%2$d. Staat de server aan en zit de tv op hetzelfde netwerk?</string>
+    <string name="bezig_server">Server zoeken op %s…</string>
+    <string name="fout_geen_pong">Op %s antwoordt geen Immich-server (geen \'pong\' op /api/server/ping).</string>
+    <string name="fout_geen_immich">Op %1$s antwoordt geen Immich-server (HTTP %2$d op /api/server/ping).</string>
+    <string name="fout_te_oud">Deze Immich-server is versie %s; dat is te oud voor deze app. Werk de server bij naar Immich 3 (of minimaal 2).</string>
+    <string name="waarschuwing_versie">Let op: je Immich-server is versie %s; de app is gemaakt voor Immich 3. Het werkt waarschijnlijk, maar niet alles is getest.</string>
+    <string name="bezig_inloggen">Inloggen als %s…</string>
+    <string name="fout_login">E-mailadres of wachtwoord klopt niet.</string>
+    <string name="fout_login_adres">Immich accepteert dit e-mailadres niet (geen geldig adres).</string>
+    <string name="fout_login_http">Inloggen mislukt (HTTP %d).</string>
+    <string name="fout_geen_token">Inloggen gaf geen toegangstoken terug.</string>
+    <string name="bezig_sleutel_aanmaken">API-sleutel aanmaken…</string>
+    <string name="fout_geen_sleutels">Dit account mag geen API-sleutels aanmaken. Vraag de beheerder van de server, of gebruik een bestaande sleutel.</string>
+    <string name="fout_sleutel_http">API-sleutel aanmaken mislukt (HTTP %1$d): %2$s</string>
+    <string name="fout_geen_sleutel_terug">Immich gaf geen sleutel terug.</string>
+    <string name="bezig_sleutel_controleren">Sleutel controleren…</string>
+    <string name="fout_sleutel_werkt_niet">De nieuwe sleutel werkt niet (HTTP %d).</string>
+    <string name="fout_sleutel_geweigerd">Deze API-sleutel wordt niet geaccepteerd door %s. Controleer of je hem helemaal gekopieerd hebt.</string>
+    <string name="fout_onverwacht">Onverwacht antwoord van de server (HTTP %1$d op %2$s).</string>
+    <string name="fout_rechten">Deze sleutel mist rechten: %1$s. Maak in Immich een nieuwe sleutel met precies: %2$s.</string>
+    <string name="onbekende_gebruiker">onbekende gebruiker</string>
+    <string name="sleutel_naam">Foto\'s op %s</string>
+
+    <string name="html_titel">Foto\'s koppelen</string>
+    <string name="html_kop">Foto\'s op de tv</string>
+    <string name="html_sub">Koppel met je Immich-server</string>
+    <string name="html_adres">Adres van je Immich-server</string>
+    <string name="html_adres_voorbeeld">bijv. 192.168.1.10:2283 of foto.mijndomein.nl</string>
+    <string name="html_adres_voorbeeld_kort">bijv. 192.168.1.10:2283</string>
+    <string name="html_adres_hint">Hetzelfde adres als in je browser of in de Immich-app.</string>
+    <string name="html_email">E-mailadres</string>
+    <string name="html_wachtwoord">Wachtwoord</string>
+    <string name="html_wachtwoord_hint">Je wachtwoord wordt alleen gebruikt om in Immich een leessleutel voor de tv aan te maken en wordt niet bewaard.</string>
+    <string name="html_koppelen">Koppelen</string>
+    <string name="html_sleutel_kop">Of plak een bestaande API-sleutel</string>
+    <string name="html_sleutel">API-sleutel</string>
+    <string name="html_sleutel_hint_voor">Maak hem in Immich onder</string>
+    <string name="html_sleutel_pad">Account-instellingen → API-sleutels → Nieuwe API-sleutel</string>
+    <string name="html_sleutel_hint_na">met precies deze rechten aangevinkt:</string>
+    <string name="html_koppelen_sleutel">Koppelen met sleutel</string>
+    <string name="html_voet">Deze pagina werkt alleen op je eigen netwerk en sluit zodra het koppelen klaar is.</string>
+    <string name="html_bezig_titel">Bezig met koppelen…</string>
+    <string name="html_bezig">De tv controleert de server en maakt een sleutel aan. Dit duurt een paar seconden.</string>
+    <string name="html_geen_verbinding_titel">Geen verbinding met de tv</string>
+    <string name="html_geen_verbinding">Staat het koppelscherm nog open op de tv en zit je telefoon op hetzelfde wifi-netwerk?</string>
+</resources>

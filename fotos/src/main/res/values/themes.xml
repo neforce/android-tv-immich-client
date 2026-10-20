@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Photos" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorAccent">#ADCBFA</item>
+    </style>
+</resources>
