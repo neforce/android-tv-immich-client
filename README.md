@@ -1,5 +1,9 @@
 # TV Client for Immich (unofficial)
 
+[![Downloads](https://img.shields.io/github/downloads/neforce/android-tv-immich-client/total?label=downloads&color=4250af)](https://github.com/neforce/android-tv-immich-client/releases)
+[![Latest release](https://img.shields.io/github/v/release/neforce/android-tv-immich-client?color=accbfa)](https://github.com/neforce/android-tv-immich-client/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/neforce/android-tv-immich-client)](LICENSE)
+
 A fast, remote-friendly client for [Immich](https://immich.app) for Android TV boxes (NVIDIA Shield, Chromecast with Google TV, and other Android TV 8+ devices). Browse your whole photo library on the big screen, relive memories, search with Immich's smart search and explore your photos on a world map, all with the remote control.
 
 > **Unofficial app.** This is an independent, community-made client. It is **not** made, endorsed or supported by the Immich project or its maintainers, and it is not the official Immich app. Please don't report problems with this app to the Immich team. "Immich" is a trademark of its respective owners and is only used here to describe compatibility.
@@ -34,7 +38,7 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 
 ## Installation
 
-1. Build the APK (see [Building](#building)) or download it from the releases page, if one is available.
+1. Download the APK from the [latest release](https://github.com/neforce/android-tv-immich-client/releases/latest), or build it yourself (see [Building](#building)).
 2. Copy it to your TV box, for example with the **Downloader** app (Play Store) or a USB stick and a file manager, and install it. You may need to allow installing apps from unknown sources for that app.
 3. Open the app, choose your language and pair it with your Immich server (see below).
 
