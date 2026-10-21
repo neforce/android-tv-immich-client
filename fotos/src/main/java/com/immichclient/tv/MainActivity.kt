@@ -36,6 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
@@ -313,12 +315,43 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         },
     ) {
         val lade = rememberDrawerState(DrawerValue.Closed)
+        val ladeInstap = remember { androidx.compose.runtime.mutableIntStateOf(0) }
+        // een frame later: tv-material zet zelf nog een focus bij het binnengaan
+        androidx.compose.runtime.LaunchedEffect(ladeInstap.intValue) {
+            if (ladeInstap.intValue == 0) return@LaunchedEffect
+            androidx.compose.runtime.withFrameNanos { }
+            val ok = runCatching { ladeFocus.requestFocus() }.getOrDefault(false)
+            Log.i("Fotos", "lade: focus naar huidige sectie ($ok)")
+        }
+        val ladeBinnen = remember { androidx.compose.runtime.mutableStateOf(false) }
+        // Schermwissel (ook viewer open/dicht): even heeft niets focus en zou Android die aan het eerste focusbare
+        // element geven = de lade (klapt kort open). Daarom is de lade tijdens de wissel niet focusbaar; het nieuwe
+        // scherm pakt zijn focus zelf. De eerste compositie met een nieuw scherm telt al mee (`nieuw`), vóór de effect.
+        val wisselSleutel = scherm to (kijker != null)
+        val laatsteSleutel = remember { androidx.compose.runtime.mutableStateOf(wisselSleutel) }
+        val wisselt = remember { androidx.compose.runtime.mutableStateOf(false) }
+        val ladeDicht = wisselSleutel != laatsteSleutel.value || wisselt.value
+        androidx.compose.runtime.LaunchedEffect(wisselSleutel) {
+            if (wisselSleutel == laatsteSleutel.value) return@LaunchedEffect
+            wisselt.value = true
+            laatsteSleutel.value = wisselSleutel
+            kotlinx.coroutines.delay(800)
+            wisselt.value = false
+        }
         ModalNavigationDrawer(
             drawerState = lade,
             modifier = Modifier.graphicsLayer { alpha = if (kijker != null) 0f else 1f },
             drawerContent = { waarde ->
                 Column(
                     Modifier.fillMaxHeight().background(if (waarde == DrawerValue.Open) Kleur.vlak else Kleur.achtergrond)
+                        .focusProperties { canFocus = !ladeDicht }
+                        // binnenkomen (◀ aan de rand, lang Terug) = altijd focus op het item van de huidige sectie, niet op wat het
+                        // dichtstbij ligt of het laatst gefocust was; daarna loopt de focus gewoon item voor item
+                        .onFocusChanged {
+                            if (it.hasFocus && !ladeBinnen.value) ladeInstap.intValue++
+                            ladeBinnen.value = it.hasFocus
+                            if (it.hasFocus) Log.i("Fotos", "lade focus (wisselt=$ladeDicht)")
+                        }
                         .padding(12.dp).selectableGroup(),
                 ) {
                     Spacer(Modifier.height(24.dp))
