@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.onFocusChanged
@@ -243,12 +244,15 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
             }
         }
 
+        // altijd de actuele rijen (spring wordt ook bewaard door de scrollbalk; een oude lijst gaf de verkeerde rij)
+        val rijenNu = rememberUpdatedState(rijen)
         fun spring(maandIndex: Int) {
             val m = staat.maanden.getOrNull(maandIndex) ?: return
             sprongLabel = maandTitel(m.sleutel)
             staat.laad(m.sleutel)
             scope.launch {
-                val i = rijen.indexOfFirst { it.sleutel == "k-${m.sleutel}" }
+                val i = rijenNu.value.indexOfFirst { it.sleutel == "k-${m.sleutel}" }
+                Log.i("Fotos", "spring naar ${m.sleutel}: rij $i")
                 if (i >= 0) staat.raster.lijst.scrollToItem(i + boven)
                 // wacht tot de maand er is en geef de eerste foto focus
                 repeat(100) {
@@ -312,7 +316,11 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                     }
                 }
             }
-            TijdlijnBalk(staat, rijen, maandVan, boven, huidigeMaand, Modifier.align(Alignment.CenterEnd))
+            TijdlijnBalk(staat, rijen, maandVan, boven, huidigeMaand, Modifier.align(Alignment.CenterEnd), ga = ::spring) {
+                // niets gekozen op de balk: focus terug op de foto waar hij was (of de eerste van de maand in beeld)
+                val terug = staat.raster.laatsteFocus?.id ?: staat.maanden.getOrNull(huidigeMaand)?.let { staat.geladen[it.sleutel]?.firstOrNull()?.id }
+                staat.raster.focusDoel = terug
+            }
             AnimatedVisibility(sprongLabel != null, Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
                 Text(
                     sprongLabel.orEmpty(), style = MaterialTheme.typography.displaySmall,
@@ -343,7 +351,7 @@ fun groetTekst(): String? {
  * over het geheel): eerste zichtbare rij → maand → aandeel binnen die maand → fotonummer in het totaal.
  */
 @Composable
-private fun TijdlijnBalk(staat: TijdlijnStaat, rijen: List<Rij>, maandVan: IntArray, boven: Int, maandIndex: Int, modifier: Modifier) {
+private fun TijdlijnBalk(staat: TijdlijnStaat, rijen: List<Rij>, maandVan: IntArray, boven: Int, maandIndex: Int, modifier: Modifier, ga: (Int) -> Unit, terug: () -> Unit) {
     val lijst = staat.raster.lijst
     val maanden = staat.maanden
     if (staat.aantal == 0 || maanden.isEmpty()) return
@@ -376,6 +384,29 @@ private fun TijdlijnBalk(staat: TijdlijnStaat, rijen: List<Rij>, maandVan: IntAr
         }
         uit
     }
+    // bediening met de afstandsbediening: een stap = een maand, ingedrukt houden = per jaar
+    val huidig = rememberUpdatedState(maandIndex)
+    val gaNu = rememberUpdatedState(ga); val terugNu = rememberUpdatedState(terug)
+    val stappen = remember(maanden) {
+        fun jaar(i: Int) = maanden[i].sleutel.take(4)
+        BalkStappen(
+            aantal = maanden.size,
+            fractie = { i -> staat.beginVan(i).toFloat() / (staat.aantal - 1).coerceAtLeast(1) },
+            label = { i -> maandTitel(maanden[i].sleutel) },
+            sub = { i -> Taal.meervoud(R.plurals.items, maanden[i].aantal, maanden[i].aantal) },
+            groot = { i, r ->
+                // naar de eerste maand (in lijstvolgorde) van het vorige/volgende jaar
+                var j = i
+                if (r > 0) { while (j < maanden.lastIndex && jaar(j) == jaar(i)) j++ }
+                else { while (j > 0 && jaar(j) == jaar(i)) j--; while (j > 0 && jaar(j - 1) == jaar(j)) j-- }
+                j
+            },
+            huidige = { huidig.value },
+            ga = { gaNu.value(it) },
+            terug = { terugNu.value() },
+            perMaand = true,
+        )
+    }
     ScrolBalk(
         fractie = { fotoNummer().toFloat() / (staat.aantal - 1).coerceAtLeast(1) },
         beweging = { lijst.firstVisibleItemIndex * 7919 + lijst.firstVisibleItemScrollOffset / 200 },
@@ -384,6 +415,7 @@ private fun TijdlijnBalk(staat: TijdlijnStaat, rijen: List<Rij>, maandVan: IntAr
         sub = { "${Taal.getal(fotoNummer() + 1)} / ${Taal.getal(staat.aantal)}" },
         markeringen = jaren,
         modifier = modifier,
+        stappen = stappen,
     )
 }
 

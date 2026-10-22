@@ -25,6 +25,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.foundation.focusable
+import android.view.KeyEvent
 import androidx.tv.material3.MaterialTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -40,7 +47,32 @@ import kotlin.math.max
  * layout. Een eerdere versie met gewone Text/offset-composables hercomponeerde tijdens de scroll-animatie en kostte
  * 12-21 % janky frames in plaats van 1-5 %; met de Canvas en de afgeremde tekstopmaak is het verschil met "geen balk"
  * binnen de meetruis (test: `--ez geen_balk true`).
+ *
+ * Bedienbaar ([stappen], 2.5): ▶ aan de rechterrand zet de focus op de balk (dan breder, met accentrand en een hint);
+ * ▲▼ verschuift de keuze per stap (tijdlijn: per maand), ingedrukt houden versnelt naar grote stappen (per jaar); het
+ * label toont live waar je heen gaat. OK of ◀ springt erheen en zet de focus op de eerste foto daar; ◀ zonder iets
+ * te kiezen en Terug zetten de focus terug waar hij was.
  */
+class BalkStappen(
+    val aantal: Int,
+    /** plek 0..1 van stap i op de baan */
+    val fractie: (Int) -> Float,
+    val label: (Int) -> String?,
+    val sub: (Int) -> String?,
+    /** grote sprong (ingedrukt houden) vanaf stap i in richting r (−1/+1), bijv. naar het vorige/volgende jaar */
+    val groot: (Int, Int) -> Int,
+    /** stap die nu (bovenaan) in beeld is */
+    val huidige: () -> Int,
+    /** naar stap i springen en de focus op de eerste foto daar zetten */
+    val ga: (Int) -> Unit,
+    /** niets gekozen: focus terug waar hij was */
+    val terug: () -> Unit,
+    /** stappen zijn maanden (hint "▲▼ maand · vasthouden: jaar"), anders een algemene hint */
+    val perMaand: Boolean = false,
+)
+
+/** Grote sprong: elke [n] stappen (lijsten zonder jaren). */
+fun grootPer(n: Int, aantal: Int): (Int, Int) -> Int = { i, r -> (i + r * n).coerceIn(0, (aantal - 1).coerceAtLeast(0)) }
 @Composable
 fun ScrolBalk(
     /** 0..1: plek van de duim; gelezen tijdens het tekenen */
@@ -54,9 +86,15 @@ fun ScrolBalk(
     /** jaartallen (of andere markeringen) langs de baan: plek 0..1 → tekst */
     markeringen: List<Pair<Float, String>> = emptyList(),
     modifier: Modifier = Modifier,
+    /** bediening met de afstandsbediening (focus op de balk); null = alleen aanwijzer */
+    stappen: BalkStappen? = null,
 ) {
     if (scrolBalkUit) return
     var zichtbaar by remember { mutableStateOf(false) }
+    // bediening: heeft de balk focus, en welke stap is gekozen (alleen in de tekenfase gelezen)
+    var focus by remember { mutableStateOf(false) }
+    val keuze = remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var start by remember { mutableIntStateOf(0) }
     // na elke scrollstap één extra tekenbeurt (170 ms later): de tekst wordt hooguit elke 150 ms opnieuw opgemaakt en zou
     // anders na de laatste stap een paar nummers achter kunnen blijven
     var tik by remember { mutableIntStateOf(0) }
@@ -69,22 +107,27 @@ fun ScrolBalk(
     // tekstopmaak van het label is het dure deel (1-3 ms per meting met het variabele lettertype): hooguit ~6× per seconde
     val geheugen = remember { LabelGeheugen() }
     // alpha alleen in de laag gelezen (geen hercompositie per animatieframe)
-    val alpha = animateFloatAsState(if (zichtbaar) 1f else 0f, tween(if (zichtbaar) 160 else 450), label = "scrolbalk")
+    val alpha = animateFloatAsState(if (zichtbaar || focus) 1f else 0f, tween(if (zichtbaar || focus) 160 else 450), label = "scrolbalk")
     val tm = rememberTextMeasurer(cacheSize = 16)
     val stijlLabel = MaterialTheme.typography.labelLarge.copy(color = Color.White)
     val stijlSub = MaterialTheme.typography.labelSmall.copy(color = Color(0xB3FFFFFF))
     val stijlJaar = MaterialTheme.typography.labelSmall.copy(color = Color(0x99FFFFFF))
     val jaren = remember(markeringen, stijlJaar) { markeringen.map { (f, t) -> f to tm.measure(t, stijlJaar) } }
     val accent = Kleur.primair
+    val hintTekst = androidx.compose.ui.res.stringResource(if (stappen?.perMaand == true) R.string.balk_hint else R.string.balk_hint_algemeen)
+    val hint = remember(hintTekst, stijlSub) { tm.measure(hintTekst, stijlSub) }
 
-    Canvas(modifier.fillMaxHeight().width(300.dp).graphicsLayer { this.alpha = alpha.value; compositingStrategy = CompositingStrategy.ModulateAlpha }) {
+    androidx.compose.foundation.layout.Box(modifier.fillMaxHeight().width(300.dp)) {
+    Canvas(Modifier.matchParentSize().graphicsLayer { this.alpha = alpha.value; compositingStrategy = CompositingStrategy.ModulateAlpha }) {
         if (alpha.value <= 0f) return@Canvas
         val w = size.width
         val rand = 28.dp.toPx()
-        val duimH = 30.dp.toPx()
+        val bediend = focus && stappen != null
+        val duimH = (if (bediend) 40 else 30).dp.toPx()
         val loop = (size.height - 2 * rand - duimH).coerceAtLeast(0f)
-        // baan
-        drawRoundRect(Color(0x33FFFFFF), Offset(w - 13.dp.toPx(), rand), Size(3.dp.toPx(), size.height - 2 * rand), CornerRadius(2.dp.toPx()))
+        // baan (met focus breder en lichter)
+        val baanB = (if (bediend) 5 else 3).dp.toPx()
+        drawRoundRect(if (bediend) Color(0x66FFFFFF) else Color(0x33FFFFFF), Offset(w - 11.5.dp.toPx() - baanB / 2, rand), Size(baanB, size.height - 2 * rand), CornerRadius(baanB / 2))
         // jaartallen: links van de baan, alleen als ze elkaar niet overlappen (minstens 20 dp uit elkaar)
         val min = 20.dp.toPx()
         var laatste = -1e9f
@@ -94,32 +137,78 @@ fun ScrolBalk(
             laatste = y
             drawText(lay, topLeft = Offset(w - 22.dp.toPx() - lay.size.width, rand + y + duimH / 2 - lay.size.height / 2))
         }
-        // duim
-        val duimY = rand + fractie().coerceIn(0f, 1f) * loop
-        drawRoundRect(accent, Offset(w - 15.dp.toPx(), duimY), Size(7.dp.toPx(), duimH), CornerRadius(4.dp.toPx()))
+        // duim (bediend: op de gekozen stap, groter, met een gloed)
+        val st = stappen
+        val k = keuze.intValue
+        val f = if (bediend && st != null && st.aantal > 0) st.fractie(k.coerceIn(0, st.aantal - 1)) else fractie()
+        val duimY = rand + f.coerceIn(0f, 1f) * loop
+        val duimB = (if (bediend) 11 else 7).dp.toPx()
+        if (bediend) drawRoundRect(accent.copy(alpha = 0.35f), Offset(w - 11.5.dp.toPx() - duimB / 2 - 4.dp.toPx(), duimY - 4.dp.toPx()), Size(duimB + 8.dp.toPx(), duimH + 8.dp.toPx()), CornerRadius(9.dp.toPx()))
+        drawRoundRect(accent, Offset(w - 11.5.dp.toPx() - duimB / 2, duimY), Size(duimB, duimH), CornerRadius(duimB / 2))
         // label naast de duim (donker vlak, zodat hij ook over foto's leesbaar is)
         @Suppress("UNUSED_EXPRESSION") tik
         val nu = android.os.SystemClock.uptimeMillis()
-        if (nu - geheugen.tijd >= 150) {
+        if (bediend || nu - geheugen.tijd >= 150) {
             geheugen.tijd = nu
             run {
-                val lt = label(); if (lt != geheugen.labelTekst) { geheugen.labelTekst = lt; geheugen.label = lt?.let { tm.measure(it, stijlLabel) } }
-                val st = sub(); if (st != geheugen.subTekst) { geheugen.subTekst = st; geheugen.sub = st?.let { tm.measure(it, stijlSub) } }
+                val lt = if (bediend && st != null) st.label(k) else label()
+                if (lt != geheugen.labelTekst) { geheugen.labelTekst = lt; geheugen.label = lt?.let { tm.measure(it, stijlLabel) } }
+                val sbt = if (bediend && st != null) st.sub(k) else sub()
+                if (sbt != geheugen.subTekst) { geheugen.subTekst = sbt; geheugen.sub = sbt?.let { tm.measure(it, stijlSub) } }
             }
         }
         val l = geheugen.label
         val s = geheugen.sub
+        val hl = if (bediend) hint else null
         if (l == null && s == null) return@Canvas
-        val tekstB = max(l?.size?.width ?: 0, s?.size?.width ?: 0).toFloat()
-        val tekstH = ((l?.size?.height ?: 0) + (s?.size?.height ?: 0)).toFloat()
+        val tekstB = maxOf(l?.size?.width ?: 0, s?.size?.width ?: 0, hl?.size?.width ?: 0).toFloat()
+        val tekstH = ((l?.size?.height ?: 0) + (s?.size?.height ?: 0) + (hl?.size?.height?.plus(4.dp.roundToPx()) ?: 0)).toFloat()
         val pb = 14.dp.toPx(); val ph = 6.dp.toPx()
         val vlakB = tekstB + 2 * pb; val vlakH = tekstH + 2 * ph
-        val rechts = w - 24.dp.toPx()
-        val boven = duimY + duimH / 2 - vlakH / 2
-        drawRoundRect(Color(0xD9000000), Offset(rechts - vlakB, boven), Size(vlakB, vlakH), CornerRadius(12.dp.toPx()))
+        val rechts = w - 26.dp.toPx()
+        val boven = (duimY + duimH / 2 - vlakH / 2).coerceIn(0f, (size.height - vlakH).coerceAtLeast(0f))
+        drawRoundRect(Color(0xE6000000), Offset(rechts - vlakB, boven), Size(vlakB, vlakH), CornerRadius(12.dp.toPx()))
+        if (bediend) drawRoundRect(accent, Offset(rechts - vlakB, boven), Size(vlakB, vlakH), CornerRadius(12.dp.toPx()), style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
         var y = boven + ph
         if (l != null) { drawText(l, topLeft = Offset(rechts - pb - l.size.width, y)); y += l.size.height }
-        if (s != null) drawText(s, topLeft = Offset(rechts - pb - s.size.width, y))
+        if (s != null) { drawText(s, topLeft = Offset(rechts - pb - s.size.width, y)); y += s.size.height }
+        if (hl != null) drawText(hl, topLeft = Offset(rechts - pb - hl.size.width, y + 4.dp.toPx()), color = accent)
+    }
+    // de balk zelf als focusdoel (smal, helemaal rechts): ▶ aan de rechterrand van het raster komt hier uit
+    if (stappen != null && stappen.aantal > 0) androidx.compose.foundation.layout.Box(
+        Modifier.align(androidx.compose.ui.Alignment.CenterEnd).fillMaxHeight().width(28.dp)
+            .focusProperties { canFocus = scrolbaar() }
+            .onFocusChanged {
+                if (it.isFocused && !focus) { keuze.intValue = stappen.huidige().coerceIn(0, stappen.aantal - 1); start = keuze.intValue; android.util.Log.i("Fotos", "balk: focus (stap $start van ${stappen.aantal})") }
+                focus = it.isFocused
+            }
+            .onPreviewKeyEvent { e ->
+                val n = e.nativeKeyEvent
+                val pijl = n.keyCode == KeyEvent.KEYCODE_DPAD_UP || n.keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+                val ok = n.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || n.keyCode == KeyEvent.KEYCODE_ENTER
+                if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent pijl || ok || n.keyCode == KeyEvent.KEYCODE_DPAD_LEFT || n.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+                when {
+                    pijl -> {
+                        val r = if (n.keyCode == KeyEvent.KEYCODE_DPAD_UP) -1 else 1
+                        val h = n.repeatCount
+                        // los = één stap; ingedrukt eerst ~10 stappen per seconde, na ~1 s grote sprongen (jaar) ~6 per seconde
+                        val nieuw = when {
+                            h >= 14 -> if (h % 3 == 0) stappen.groot(keuze.intValue, r) else keuze.intValue
+                            h > 0 && h % 2 == 1 -> keuze.intValue
+                            else -> keuze.intValue + r
+                        }
+                        keuze.intValue = nieuw.coerceIn(0, stappen.aantal - 1)
+                        true
+                    }
+                    ok -> { android.util.Log.i("Fotos", "balk: OK → stap ${keuze.intValue}"); stappen.ga(keuze.intValue); true }
+                    n.keyCode == KeyEvent.KEYCODE_DPAD_LEFT -> { if (keuze.intValue != start) stappen.ga(keuze.intValue) else stappen.terug(); true }
+                    n.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT -> true
+                    n.keyCode == KeyEvent.KEYCODE_BACK -> { stappen.terug(); true }
+                    else -> false
+                }
+            }
+            .focusable(),
+    )
     }
 }
 

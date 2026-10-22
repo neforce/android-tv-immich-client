@@ -416,6 +416,11 @@ class FotoDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner, ViewM
 
     override fun onCreate() {
         super.onCreate()
+        // Zelfde proces als de app (moet, zie het manifest). Staat de app nog in het geheugen (bv. met de wereldkaart),
+        // dan eerst alles wat weg kan vrijgeven: het systeem rekent het hele proces als voorgrond zolang de screensaver
+        // draait, en ruimde bij het wekken anders van alles op (zwart scherm, 21-10). De kaart zelf gaat weg zodra de
+        // activity stopt (KaartScherm).
+        (application as? App)?.ontlast("screensaver")
         bewaarder.performAttach()
         bewaarder.performRestore(null)
         register.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
@@ -432,6 +437,7 @@ class FotoDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner, ViewM
         view.setViewTreeViewModelStoreOwner(this)
         view.setContent { FotosThema { DreamScherm(staat) } }
         setContentView(view)
+        isAttached = true
         Log.i("Fotos", "screensaver: gestart (${Instellingen.dreamBron}, ${Instellingen.dreamSeconden} s)")
     }
 
@@ -450,9 +456,29 @@ class FotoDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner, ViewM
             // volume gewoon laten werken, zonder de screensaver te sluiten
             KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE -> return super.dispatchKeyEvent(event)
         }
-        if (event.action == KeyEvent.ACTION_UP) wakeUp()
+        // Andere toets: wakker worden bij het LOSLATEN (de key-up mag niet bij de app eronder terechtkomen: in een
+        // launcher is dat een klik op de tegel die focus heeft). Blijft de toets ingedrukt, of reageert het systeem
+        // niet op wakeUp(), dan na 1,5 s alsnog: de screensaver mag nooit blijven hangen.
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) wekUiterlijk(1500)
+        if (event.action == KeyEvent.ACTION_UP) wek()
         return true
     }
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var gewekt = false
+
+    private fun wek() {
+        if (gewekt) return
+        gewekt = true
+        Log.i("Fotos", "screensaver: toets, wakker worden")
+        runCatching { wakeUp() }.onFailure { Log.w("Fotos", "screensaver wakeUp", it); finish() }
+        // vangnet: na 2 s nog niet weg → hard stoppen
+        handler.postDelayed({ if (isAttached) { Log.w("Fotos", "screensaver: wakeUp hielp niet, finish()"); runCatching { finish() } } }, 2000)
+    }
+
+    private fun wekUiterlijk(ms: Long) = handler.postDelayed({ if (!gewekt) wek() }, ms)
+
+    private var isAttached = false
 
     override fun onDreamingStopped() {
         register.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
@@ -461,6 +487,8 @@ class FotoDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner, ViewM
     }
 
     override fun onDetachedFromWindow() {
+        isAttached = false
+        handler.removeCallbacksAndMessages(null)
         if (register.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             register.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
             register.handleLifecycleEvent(Lifecycle.Event.ON_STOP)

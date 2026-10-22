@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
@@ -96,6 +97,14 @@ class App : Application(), SingletonImageLoader.Factory {
         }
     }
 
+    /** Alles vrijgeven wat zonder schade weg kan (beeldcache, thumbhashes, MapLibre-tegels), bv. als de screensaver start. */
+    fun ontlast(waarom: String) {
+        android.util.Log.i("Fotos", "ontlasten ($waarom)")
+        SingletonImageLoader.get(this).memoryCache?.clear()
+        ThumbHash.leeg()
+        openKaart?.onLowMemory()
+    }
+
     companion object { const val CACHE_MB = 56 }
 }
 
@@ -109,6 +118,10 @@ sealed class Scherm {
     class Zoeken(scope: CoroutineScope) : Scherm() { val staat = ZoekStaat(scope) }
     class Herinneringen(scope: CoroutineScope) : Scherm() { val staat = HerinneringStaat(scope) }
     class Kaart(scope: CoroutineScope) : Scherm() { val staat = KaartStaat(scope) }
+    /** alle foto's van een kaartcluster (lang OK op de kaart) */
+    class KaartFotos(val titel: String, ids: List<String>, scope: CoroutineScope) : Scherm() { val staat = KaartFotosStaat(ids, scope) }
+    /** alle personen (vanuit Zoeken), met zoekveld en sortering */
+    class Personen(val lijst: List<Persoon>) : Scherm() { val staat = PersonenStaat(lijst) }
     data object Instellingen : Scherm()
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
@@ -182,6 +195,7 @@ class MainActivity : ComponentActivity() {
             kaartFps = intent.getIntExtra("kaart_fps", 0); kaartAlles = intent.getBooleanExtra("kaart_alles", false)
             kaartRes = intent.getIntExtra("kaart_res", kaartRes); kaartVlucht = intent.getIntExtra("kaart_vlucht", kaartVlucht)
             scrolBalkUit = intent.getBooleanExtra("geen_balk", false)
+            kaartCache = intent.getBooleanExtra("kaart_cache", kaartCache); kaartPrefetch = intent.getIntExtra("kaart_prefetch", -1)
         }
         setContent { FotosThema { FotosApp(finish = ::finish, herstart = ::recreate, testIndex = testIndex, startSectie = startSectie, instelTest = instelTest, taalTest = taalTest) } }
     }
@@ -324,6 +338,17 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Log.i("Fotos", "lade: focus naar huidige sectie ($ok)")
         }
         val ladeBinnen = remember { androidx.compose.runtime.mutableStateOf(false) }
+        val ladeFocusNu = remember { androidx.compose.runtime.mutableStateOf(false) }
+        // Omleiden alleen bij het BINNENGAAN. Bij een focusverplaatsing binnen de lade kan hasFocus kort false->true
+        // knipperen; daarom telt "buiten" pas na 300 ms zonder focus (anders sprong ▼ steeds terug naar de huidige sectie).
+        androidx.compose.runtime.LaunchedEffect(ladeFocusNu.value) {
+            if (ladeFocusNu.value) {
+                if (!ladeBinnen.value) { ladeBinnen.value = true; ladeInstap.intValue++ }
+            } else {
+                kotlinx.coroutines.delay(300)
+                ladeBinnen.value = false
+            }
+        }
         // Schermwissel (ook viewer open/dicht): even heeft niets focus en zou Android die aan het eerste focusbare
         // element geven = de lade (klapt kort open). Daarom is de lade tijdens de wissel niet focusbaar; het nieuwe
         // scherm pakt zijn focus zelf. De eerste compositie met een nieuw scherm telt al mee (`nieuw`), vóór de effect.
@@ -348,8 +373,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         // binnenkomen (◀ aan de rand, lang Terug) = altijd focus op het item van de huidige sectie, niet op wat het
                         // dichtstbij ligt of het laatst gefocust was; daarna loopt de focus gewoon item voor item
                         .onFocusChanged {
-                            if (it.hasFocus && !ladeBinnen.value) ladeInstap.intValue++
-                            ladeBinnen.value = it.hasFocus
+                            ladeFocusNu.value = it.hasFocus
                             if (it.hasFocus) Log.i("Fotos", "lade focus (wisselt=$ladeDicht)")
                         }
                         .padding(12.dp).selectableGroup(),
@@ -359,7 +383,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         if (s == Sectie.INSTELLINGEN) Spacer(Modifier.weight(1f))
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),
-                            modifier = if (sectie == s) Modifier.focusRequester(ladeFocus) else Modifier,
+                            modifier = (if (sectie == s) Modifier.focusRequester(ladeFocus) else Modifier)
+                                .onFocusChanged { if (it.isFocused && !ladeBinnen.value) Log.i("Fotos", "lade: binnen op ${s.name} (huidig ${sectie.name})") },
                             onClick = {
                                 stapel.clear(); sectie = s
                                 lade.setValue(DrawerValue.Closed)
@@ -375,7 +400,21 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 }
             },
         ) {
-            Box(Modifier.fillMaxSize().padding(start = 80.dp)) {
+            // Binnenkomen zonder flits: verlaat de focus het scherm naar links (◀ aan de rand), dan gaat hij meteen naar het
+            // lade-item van de huidige sectie. Android koos anders eerst het geometrisch dichtstbijzijnde item (bv.
+            // Verkennen) en pas een frame later corrigeerde ladeInstap dat: een zichtbare flits. (canFocus per item of
+            // focusProperties.enter op de lade werken niet: tv-material zet die zelf.)
+            @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+            Box(
+                Modifier.fillMaxSize().padding(start = 80.dp)
+                    .focusProperties {
+                        exit = { richting ->
+                            if (richting == androidx.compose.ui.focus.FocusDirection.Left && !ladeDicht) ladeFocus
+                            else androidx.compose.ui.focus.FocusRequester.Default
+                        }
+                    }
+                    .focusGroup(),
+            ) {
                 key(scherm) {
                     when (scherm) {
                         is Scherm.Tijdlijn -> TijdlijnScherm(scherm, nav)
@@ -384,6 +423,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Zoeken -> ZoekScherm(scherm.staat, nav)
                         is Scherm.Herinneringen -> HerinneringenScherm(scherm.staat, nav)
                         is Scherm.Kaart -> KaartScherm(scherm.staat, nav)
+                        is Scherm.KaartFotos -> KaartFotosScherm(scherm, nav)
+                        is Scherm.Personen -> PersonenScherm(scherm.staat, nav)
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
                         is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
                     }

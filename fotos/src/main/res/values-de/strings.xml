@@ -139,7 +139,7 @@
         <item quantity="other">%s Fotos mit Standort</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Kartenhintergrund nicht verfügbar (kein Internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ wählen / verschieben   ·   OK zoomen / öffnen   ·   ⏪︎⏩︎ Zoomstufe   ·   Zurück: ganze Welt, nochmal: verlassen   ·   Zurück lang drücken: Menü"</string>
+    <string name="kaart_hint">"◀▶▲▼ wählen / verschieben   ·   OK zoomen   ·   OK lang: alle Fotos   ·   ⏯ Diashow   ·   ⏪︎⏩︎ Zoomstufe   ·   Zurück: ganze Welt"</string>
 
     <string name="instellingen">Einstellungen</string>
     <string name="instellingen_sub">"◀ ▶ oder OK: Wert wählen   ·   Zurück lang drücken: Menü   ·   INFO: Tasten"</string>
@@ -444,4 +444,44 @@
     <string name="diag_anders">Sonstiges</string>
     <string name="diag_voorgrond">im Vordergrund</string>
 
+    <!-- 2.5: wereldkaart (werelddelen/regio's), scrollbalk, personen -->
+    <string name="deel_europa">Europa</string>
+    <string name="deel_azie">Asien</string>
+    <string name="deel_afrika">Afrika</string>
+    <string name="deel_noord_amerika">Nordamerika</string>
+    <string name="deel_zuid_amerika">Südamerika</string>
+    <string name="deel_oceanie">Ozeanien</string>
+    <string name="deel_antarctica">Antarktis</string>
+    <string name="deel_overig">Weitere Orte</string>
+    <string name="regio_noord_europa">Nordeuropa</string>
+    <string name="regio_west_europa">Westeuropa</string>
+    <string name="regio_zuid_europa">Südeuropa</string>
+    <string name="regio_oost_europa">Osteuropa</string>
+    <string name="regio_noord_afrika">Nordafrika</string>
+    <string name="regio_west_afrika">Westafrika</string>
+    <string name="regio_centraal_afrika">Zentralafrika</string>
+    <string name="regio_oost_afrika">Ostafrika</string>
+    <string name="regio_zuidelijk_afrika">Südliches Afrika</string>
+    <string name="regio_noordelijk_amerika">USA und Kanada</string>
+    <string name="regio_midden_amerika">Mittelamerika</string>
+    <string name="regio_caribisch">Karibik</string>
+    <string name="regio_centraal_azie">Zentralasien</string>
+    <string name="regio_oost_azie">Ostasien</string>
+    <string name="regio_zuidoost_azie">Südostasien</string>
+    <string name="regio_zuid_azie">Südasien</string>
+    <string name="regio_west_azie">Naher Osten</string>
+    <string name="regio_australie">Australien und Neuseeland</string>
+    <string name="regio_melanesie">Melanesien</string>
+    <string name="regio_micronesie">Mikronesien</string>
+    <string name="regio_polynesie">Polynesien</string>
+    <string name="balk_hint">"▲▼ Monat · halten: Jahr · OK los"</string>
+    <string name="zoek_persoon">Person suchen</string>
+    <string name="volg_vaakst">Meiste Fotos</string>
+    <string name="alle_personen">Alle Personen (%1$d)</string>
+    <string name="t_ok_lang">OK lang drücken</string>
+    <string name="t_kaart_ok_lang">alle Fotos der Gruppe als Raster (nach Datum)</string>
+    <string name="t_kaart_play">Diashow der Gruppe</string>
+    <string name="t_balk">▶ am rechten Rand</string>
+    <string name="t_balk_wat">Scrollleiste: ▲▼ pro Monat (halten: pro Jahr), OK oder ◀ springt dorthin</string>
+    <string name="balk_hint_algemeen">"▲▼ weiter · halten: schneller · OK los"</string>
 </resources>

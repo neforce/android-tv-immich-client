@@ -151,7 +151,7 @@
         <item quantity="other">%s photos with a location</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Map background unavailable (no internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ select / pan   ·   OK zoom in / open   ·   ⏪︎⏩︎ zoom   ·   Back: whole world, again: leave   ·   Hold Back: menu"</string>
+    <string name="kaart_hint">"◀▶▲▼ select / pan   ·   OK zoom in   ·   hold OK: all photos   ·   ⏯ slideshow   ·   ⏪︎⏩︎ zoom   ·   Back: whole world"</string>
 
     <!-- Settings -->
     <string name="instellingen">Settings</string>
@@ -461,4 +461,44 @@
     <string name="diag_anders">Other</string>
     <string name="diag_voorgrond">while in the foreground</string>
 
+    <!-- 2.5: wereldkaart (werelddelen/regio's), scrollbalk, personen -->
+    <string name="deel_europa">Europe</string>
+    <string name="deel_azie">Asia</string>
+    <string name="deel_afrika">Africa</string>
+    <string name="deel_noord_amerika">North America</string>
+    <string name="deel_zuid_amerika">South America</string>
+    <string name="deel_oceanie">Oceania</string>
+    <string name="deel_antarctica">Antarctica</string>
+    <string name="deel_overig">Other places</string>
+    <string name="regio_noord_europa">Northern Europe</string>
+    <string name="regio_west_europa">Western Europe</string>
+    <string name="regio_zuid_europa">Southern Europe</string>
+    <string name="regio_oost_europa">Eastern Europe</string>
+    <string name="regio_noord_afrika">North Africa</string>
+    <string name="regio_west_afrika">West Africa</string>
+    <string name="regio_centraal_afrika">Central Africa</string>
+    <string name="regio_oost_afrika">East Africa</string>
+    <string name="regio_zuidelijk_afrika">Southern Africa</string>
+    <string name="regio_noordelijk_amerika">USA &amp; Canada</string>
+    <string name="regio_midden_amerika">Central America</string>
+    <string name="regio_caribisch">Caribbean</string>
+    <string name="regio_centraal_azie">Central Asia</string>
+    <string name="regio_oost_azie">East Asia</string>
+    <string name="regio_zuidoost_azie">Southeast Asia</string>
+    <string name="regio_zuid_azie">South Asia</string>
+    <string name="regio_west_azie">Middle East</string>
+    <string name="regio_australie">Australia &amp; New Zealand</string>
+    <string name="regio_melanesie">Melanesia</string>
+    <string name="regio_micronesie">Micronesia</string>
+    <string name="regio_polynesie">Polynesia</string>
+    <string name="balk_hint">"▲▼ month · hold: year · OK go"</string>
+    <string name="zoek_persoon">Find person</string>
+    <string name="volg_vaakst">Most photos</string>
+    <string name="alle_personen">All people (%1$d)</string>
+    <string name="t_ok_lang">Hold OK</string>
+    <string name="t_kaart_ok_lang">all photos of the group as a grid (sorted by date)</string>
+    <string name="t_kaart_play">slideshow of the group</string>
+    <string name="t_balk">▶ at the right edge</string>
+    <string name="t_balk_wat">scroll bar: ▲▼ per month (hold: per year), OK or ◀ jumps there</string>
+    <string name="balk_hint_algemeen">"▲▼ move · hold: faster · OK go"</string>
 </resources>

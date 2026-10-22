@@ -155,7 +155,13 @@ fun jarenGeleden(n: Int) = Taal.meervoud(R.plurals.jaren_geleden, n, n)
 object Landnaam {
     private val isoVanEngels: Map<String, String> by lazy {
         val m = HashMap<String, String>()
-        for (iso in Locale.getISOCountries()) m[Locale("", iso).getDisplayCountry(Locale.ENGLISH).lowercase(Locale.ROOT)] = iso
+        for (iso in Locale.getISOCountries()) {
+            val n = Locale("", iso).getDisplayCountry(Locale.ENGLISH).lowercase(Locale.ROOT)
+            m[n] = iso
+            // ICU schrijft "Bosnia & Herzegovina", "St. Lucia"; de geocoder van Immich "Bosnia and Herzegovina", "Saint Lucia"
+            m[n.replace(" & ", " and ")] = iso
+            if (n.startsWith("st. ")) m["saint " + n.removePrefix("st. ")] = iso
+        }
         // namen die Immich (geocoder) anders schrijft dan de ICU-weergave
         m["the netherlands"] = "NL"; m["netherlands"] = "NL"; m["united states of america"] = "US"; m["united states"] = "US"
         m["czech republic"] = "CZ"; m["czechia"] = "CZ"; m["russia"] = "RU"; m["south korea"] = "KR"; m["north korea"] = "KP"
@@ -168,6 +174,12 @@ object Landnaam {
     }
     private val cache = HashMap<String, String>()
     private var cacheTaal = ""
+
+    /** Engelse naam (zoals Immich hem geeft) → ISO 3166-code, of null als hij onbekend is. */
+    fun iso(engels: String): String? = isoVanEngels[engels.trim().lowercase(Locale.ROOT)]
+
+    /** Naam van een land (ISO-code) in de app-taal. */
+    fun vanIso(iso: String): String = Locale("", iso).getDisplayCountry(Taal.locale).ifBlank { iso }
 
     /** Engelse naam → naam in de app-taal (gecachet per taal). */
     @Synchronized fun vertaal(engels: String): String {

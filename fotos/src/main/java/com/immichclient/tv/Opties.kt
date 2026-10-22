@@ -91,6 +91,11 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
+    // keuzelijst (album/persoon) dicht: focus terug op die regel (anders pakt Android de lade)
+    val kiesRegel = remember { FocusRequester() }
+    val kiezerOpen = albumKiezer || persoonKiezer
+    var kiezerWasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(kiezerOpen) { if (kiezerWasOpen && !kiezerOpen) { delay(16); runCatching { kiesRegel.requestFocus() } }; kiezerWasOpen = kiezerOpen }
     LaunchedEffect(Unit) {
         delay(30)
         // na een taalwissel (recreate) staat de lijst nog op dezelfde plek: focus terug op de regel Taal, anders de eerste regel
@@ -134,8 +139,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Actie(stringResource(R.string.dream_instellen), stringResource(R.string.dream_instellen_uitleg)) { hulp = true } }
         item { Actie(stringResource(R.string.dream_voorbeeld), stringResource(R.string.dream_voorbeeld_uitleg)) { runCatching { ctx.startActivity(android.content.Intent(ctx, VoorbeeldActivity::class.java)) } } }
         item { Keuzes(stringResource(R.string.dream_bron), stringResource(R.string.dream_bron_uitleg), DreamBron.entries.map { stringResource(it.label) }, Instellingen.dreamBron.ordinal) { Instellingen.dreamBron = DreamBron.entries[it] } }
-        if (Instellingen.dreamBron == DreamBron.ALBUM) item { Actie(stringResource(R.string.dream_album), Instellingen.dreamAlbumNaam.ifBlank { stringResource(R.string.dream_kies) }) { albumKiezer = true } }
-        if (Instellingen.dreamBron == DreamBron.PERSOON) item { Actie(stringResource(R.string.dream_persoon), Instellingen.dreamPersoonNaam.ifBlank { stringResource(R.string.dream_kies) }) { persoonKiezer = true } }
+        if (Instellingen.dreamBron == DreamBron.ALBUM) item { Actie(stringResource(R.string.dream_album), Instellingen.dreamAlbumNaam.ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(kiesRegel)) { albumKiezer = true } }
+        if (Instellingen.dreamBron == DreamBron.PERSOON) item { Actie(stringResource(R.string.dream_persoon), Instellingen.dreamPersoonNaam.ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(kiesRegel)) { persoonKiezer = true } }
         item {
             val labels = Instellingen.DREAM_TIJDEN.map { if (it >= 60) stringResource(R.string.minuten, it / 60) else stringResource(R.string.seconden, it) }
             Keuzes(stringResource(R.string.tijd_per_foto), stringResource(R.string.dream_tijd_uitleg), labels, Instellingen.DREAM_TIJDEN.indexOf(Instellingen.dreamSeconden).coerceAtLeast(0)) { Instellingen.dreamSeconden = Instellingen.DREAM_TIJDEN[it] }
@@ -275,7 +280,7 @@ private fun Keuzes(titel: String, uitleg: String, opties: List<String>, index: I
 }
 
 @Composable
-private fun Actie(titel: String, uitleg: String, onKlik: () -> Unit) = Regel(titel, uitleg, onKlik = onKlik) { focus ->
+private fun Actie(titel: String, uitleg: String, modifier: Modifier = Modifier, onKlik: () -> Unit) = Regel(titel, uitleg, modifier, onKlik = onKlik) { focus ->
     Text("OK", style = MaterialTheme.typography.labelLarge, color = if (focus) Kleur.opPrimair else Kleur.zacht, modifier = Modifier.padding(end = 10.dp))
 }
 
@@ -338,6 +343,7 @@ fun ToetsenOverzicht(sluit: () -> Unit) {
                         R.string.t_ok to R.string.t_ok_open,
                         R.string.t_play to R.string.t_play_wat,
                         R.string.t_spoel to R.string.t_spoel_maand,
+                        R.string.t_balk to R.string.t_balk_wat,
                         R.string.t_terug to R.string.t_terug_boven,
                     ))
                     ToetsGroep(R.string.tg_instellingen, listOf(
@@ -357,6 +363,8 @@ fun ToetsenOverzicht(sluit: () -> Unit) {
                     ToetsGroep(R.string.tg_kaart, listOf(
                         R.string.t_pijlen to R.string.t_kaart_pijlen,
                         R.string.t_ok to R.string.t_kaart_ok,
+                        R.string.t_ok_lang to R.string.t_kaart_ok_lang,
+                        R.string.t_play to R.string.t_kaart_play,
                         R.string.t_spoel to R.string.t_kaart_zoom,
                         R.string.t_terug to R.string.t_kaart_terug,
                         R.string.t_kaart_links to R.string.t_links_rand_wat,

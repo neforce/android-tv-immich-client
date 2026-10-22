@@ -95,6 +95,8 @@ class Resultaten(private val scope: CoroutineScope) {
     }
 }
 
+private const val TOP_PERSONEN = 10
+
 enum class ZoekModus(@StringRes val label: Int) { SLIM(R.string.modus_slim), TEKST(R.string.modus_tekst), NAAM(R.string.modus_naam) }
 enum class ZoekType(@StringRes val label: Int, val video: Boolean?) { ALLES(R.string.type_alles, null), FOTO(R.string.type_fotos, false), VIDEO(R.string.type_videos, true) }
 enum class ZoekVolgorde(@StringRes val label: Int) { RELEVANTIE(R.string.volg_relevantie), NIEUW(R.string.volg_nieuw), OUD(R.string.volg_oud) }
@@ -238,7 +240,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                 }
             }
         }
-        LijstBalk(staat.res.raster.lijst, rijen, gesorteerd.size, staat.res.bezig, Modifier.align(Alignment.CenterEnd))
+        LijstBalk(staat.res.raster, rijen, gesorteerd.size, staat.res.bezig, Modifier.align(Alignment.CenterEnd))
     }
     LaunchedEffect(Unit) { delay(30); if (!staat.res.gezocht) runCatching { veld.requestFocus() } }
     // laag dicht: focus terug op het zoekveld (anders springt Android naar de lade); resultaten nemen hem daarna over
@@ -270,12 +272,21 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
         if (staat.personen.isNotEmpty()) {
             Text(stringResource(R.string.personen), style = MaterialTheme.typography.titleMedium)
             val persoon = stringResource(R.string.persoon)
+            // de tien die het vaakst voorkomen (volgorde van Immich: favorieten, dan het aantal foto's) + "Alle personen"
+            // (raster met gezichten, zoeken en sorteren); vroeger 30 chips in één rij = veel scrollen
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(staat.personen.take(30), key = { it.id }) { p ->
+                items(staat.personen.take(TOP_PERSONEN), key = { it.id }) { p ->
                     Keuze(
                         selected = false,
                         onClick = { nav.open(Scherm.Tijdlijn(p.naam, persoon, Filter(persoonId = p.id), true, false, nav.scope)) },
                         leadingIcon = { Gezicht(p, 26.dp) }, tekst = p.naam,
+                    )
+                }
+                if (staat.personen.size > TOP_PERSONEN) item(key = "alle") {
+                    Keuze(
+                        selected = false, onClick = { nav.open(Scherm.Personen(staat.personen)) },
+                        leadingIcon = { Icon(Icons.Filled.Search, null, Modifier.width(18.dp)) },
+                        tekst = stringResource(R.string.alle_personen, staat.personen.size),
                     )
                 }
             }
@@ -384,27 +395,54 @@ fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
                 if (res.fout != null && res.assets.isEmpty()) Text(stringResource(R.string.laden_mislukt, res.fout.orEmpty()), color = Kleur.zacht)
             }
         }
-        LijstBalk(res.raster.lijst, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
+        LijstBalk(res.raster, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
     }
 }
 
-/** Scrollbalk voor een platte lijst (zoekresultaten, plaats): dagkop van de eerste zichtbare rij + "N / M". */
+/**
+ * Scrollbalk voor een platte lijst (zoekresultaten, plaats): dagkop van de eerste zichtbare rij + "N / M". Bedienbaar:
+ * een stap = een dag (rij met kop), of bij een lijst zonder dagen 5 % van de lijst.
+ */
 @Composable
-fun LijstBalk(lijst: androidx.compose.foundation.lazy.LazyListState, rijen: List<Rij>, totaal: Int, bezig: Boolean, modifier: Modifier, boven: Int = 1) {
+fun LijstBalk(raster: RasterStaat, rijen: List<Rij>, totaal: Int, bezig: Boolean, modifier: Modifier, boven: Int = 1) {
     if (rijen.isEmpty()) return
+    val lijst = raster.lijst
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val eerste = remember(rijen) { eersteFotoPerRij(rijen) }
     fun rijNu() = (lijst.firstVisibleItemIndex - boven).coerceIn(0, rijen.lastIndex)
+    fun kopVan(rij: Int): String? {
+        var r = rij
+        while (r > 0 && (rijen[r] as? RijFotos)?.regel?.metKop != true) r--
+        return (rijen[r] as? RijFotos)?.regel?.stukken?.firstOrNull()?.kop
+    }
+    val stappen = remember(rijen, totaal) {
+        val koppen = rijen.indices.filter { (rijen[it] as? RijFotos)?.regel?.metKop == true }
+        val ankers = if (koppen.size >= 3) koppen else (0 until 20).map { it * rijen.size / 20 }.distinct()
+        BalkStappen(
+            aantal = ankers.size,
+            fractie = { i -> eerste[ankers[i]].toFloat() / (totaal - 1).coerceAtLeast(1) },
+            label = { i -> kopVan(ankers[i]) },
+            sub = { i -> "${Taal.getal(eerste[ankers[i]] + 1)} / ${Taal.getal(totaal)}" },
+            groot = grootPer(10, ankers.size),
+            huidige = { ankers.indexOfLast { it <= rijNu() }.coerceAtLeast(0) },
+            ga = { i ->
+                val r = ankers[i]
+                scope.launch {
+                    lijst.scrollToItem(r + boven)
+                    raster.focusDoel = (rijen[r] as? RijFotos)?.regel?.stukken?.firstOrNull()?.vakken?.firstOrNull()?.asset?.id
+                }
+            },
+            terug = { raster.focusDoel = raster.laatsteFocus?.id },
+        )
+    }
     ScrolBalk(
         fractie = { fractieVan(lijst, boven) },
         beweging = { lijst.firstVisibleItemIndex * 7919 + lijst.firstVisibleItemScrollOffset / 200 },
         scrolbaar = { lijst.canScrollForward || lijst.canScrollBackward },
-        label = {
-            var r = rijNu()
-            while (r > 0 && (rijen[r] as? RijFotos)?.regel?.metKop != true) r--
-            (rijen[r] as? RijFotos)?.regel?.stukken?.firstOrNull()?.kop
-        },
+        label = { kopVan(rijNu()) },
         sub = { "${Taal.getal(eerste[rijNu()] + 1)} / ${Taal.getal(totaal)}" + if (bezig) "+" else "" },
         modifier = modifier,
+        stappen = stappen,
     )
 }
 

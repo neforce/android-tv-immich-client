@@ -36,7 +36,13 @@ data class Asset(
 data class Pagina(val assets: List<Asset>, val volgende: Int?)
 @Immutable data class Gebruiker(val naam: String, val email: String)
 /** Alle foto's met GPS voor de wereldkaart, als kolommen (compact: kunnen tienduizenden zijn). Volgorde = nieuwste eerst. */
-class Markers(val id: Array<String>, val lat: DoubleArray, val lon: DoubleArray, val stad: Array<String?>, val land: Array<String?>) {
+class Markers(
+    val id: Array<String>, val lat: DoubleArray, val lon: DoubleArray, val stad: Array<String?>,
+    /** landnaam in de app-taal */
+    val land: Array<String?>,
+    /** ISO-landcode (null als Immich geen of een onbekend land gaf) */
+    val iso: Array<String?>,
+) {
     val aantal get() = id.size
 }
 data class Details(

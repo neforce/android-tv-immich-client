@@ -19,10 +19,10 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 - **Search**: Immich smart search ("beach", "birthday cake", "dog in the snow"), text in photos (OCR) and file names, with a built-in on-screen keyboard and voice search.
 - **Explore**: people (faces) and places.
 - **Albums**: sort by recent activity, newest photos, name or size, filter shared albums, search by name.
-- **World map**: all geotagged photos as clusters on a smooth vector map (dark, light or satellite) that split up as you zoom in.
+- **World map**: all geotagged photos as clusters on a smooth vector map (dark, light or satellite), grouped by continent, region and country, splitting into places as you zoom in. Open all photos of a cluster at once or start a slideshow from it.
 - **Favorites**.
 - **Screensaver**: your photos as the system screensaver, with clock, country map and countdown ring. See [Screensaver](#screensaver).
-- **Scroll bar** with the position in your whole library (month, photo number, years).
+- **Scroll bar** with the position in your whole library (month, photo number, years). Move onto it with ▶ to jump through months and years quickly.
 - **Diagnostics** under Settings → About: the reason the app last stopped, kept on the device only.
 - **Settings**: slideshow, viewer, timeline, map, accent colour, app name and icon, greeting, start screen and more. See [Settings](#settings).
 - **Languages**: English, Dutch, German, French and Spanish, with a language picker on first start.
@@ -80,6 +80,7 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 | Everywhere | **Menu** (if your remote sends it) | Open the menu |
 | Everywhere (not in the viewer) | **Info** | Show all shortcuts |
 | Timeline | **⏩ / ⏪** | Next / previous month |
+| Timeline | **▶** at the right edge | Focus the scroll bar: **▲ ▼** per month (hold for years), **OK** jumps there |
 | Timeline, albums, search | **Play/Pause** | Start a slideshow from the selected photo |
 | Viewer | **◀ ▶** | Previous / next photo |
 | Viewer | **OK** | Start / stop the slideshow (videos: pause) |
@@ -87,6 +88,8 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 | Viewer | **⏩ / ⏪** | 10 photos forward / back (videos: seek 10 s) |
 | World map | **◀ ▶ ▲ ▼** | Select the next cluster in that direction, or pan |
 | World map | **OK** | Zoom in on the cluster; open the photos at the deepest level |
+| World map | **OK (long press)** | Show all photos of the cluster |
+| World map | **Play/Pause** | Slideshow of the cluster |
 | World map | **⏩ / ⏪** | Zoom in / out |
 | World map | **Back** | Back to the whole world; press again to leave the map |
 

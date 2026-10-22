@@ -239,18 +239,49 @@ object Immich {
 
     // ---- Kaart ----
 
-    /** Alle foto's met GPS (id, plek, plaats): één call (kunnen tienduizenden zijn), nieuwste eerst. */
-    suspend fun markers(): Markers = withContext(Dispatchers.Default) {
-        val a = JSONArray(get("/map/markers"))
-        val n = a.length()
-        val ids = Array(n) { "" }; val lat = DoubleArray(n); val lon = DoubleArray(n); val stad = arrayOfNulls<String>(n); val land = arrayOfNulls<String>(n)
-        for (i in 0 until n) {
-            val o = a.getJSONObject(i)
-            ids[i] = o.getString("id"); lat[i] = o.getDouble("lat"); lon[i] = o.getDouble("lon")
-            stad[i] = o.optString("city").takeIf { it.isNotEmpty() && it != "null" }
-            land[i] = o.optString("country").takeIf { it.isNotEmpty() && it != "null" }?.let(Landnaam::vertaal)
+    /**
+     * Alle foto's met GPS (id, plek, plaats): één call (kunnen tienduizenden zijn: 47k = 6,6 MB JSON), nieuwste eerst.
+     * Gestreamd gelezen (JsonReader) in plaats van als één JSONArray: dat kostte ~40 MB tijdelijke objecten op de
+     * Java-heap (47k JSONObjects met elk een eigen map), precies op het moment dat de kaart ook geheugen nodig heeft.
+     * Plaats- en landnamen worden gedeeld (dezelfde String voor dezelfde naam).
+     */
+    suspend fun markers(): Markers = withContext(Dispatchers.IO) {
+        val req = Request.Builder().url("$api/map/markers").build()
+        val ids = ArrayList<String>(4096); var lat = DoubleArray(4096); var lon = DoubleArray(4096)
+        val stad = ArrayList<String?>(4096); val engels = ArrayList<String?>(4096)
+        val pool = HashMap<String, String>()
+        fun gedeeld(s: String?) = s?.takeIf { it.isNotEmpty() && it != "null" }?.let { pool.getOrPut(it) { it } }
+        http.newCall(req).execute().use { r ->
+            if (!r.isSuccessful) throw IOException("Immich ${r.code}: /api/map/markers ${r.body?.string().orEmpty().take(200)}")
+            android.util.JsonReader(r.body!!.charStream()).use { j ->
+                fun tekst(): String? = if (j.peek() == android.util.JsonToken.NULL) { j.nextNull(); null } else j.nextString()
+                j.beginArray()
+                while (j.hasNext()) {
+                    var id = ""; var la = Double.NaN; var lo = Double.NaN; var st: String? = null; var la2: String? = null
+                    j.beginObject()
+                    while (j.hasNext()) when (j.nextName()) {
+                        "id" -> id = j.nextString()
+                        "lat" -> la = if (j.peek() == android.util.JsonToken.NULL) { j.nextNull(); Double.NaN } else j.nextDouble()
+                        "lon" -> lo = if (j.peek() == android.util.JsonToken.NULL) { j.nextNull(); Double.NaN } else j.nextDouble()
+                        "city" -> st = gedeeld(tekst())
+                        "country" -> la2 = gedeeld(tekst())
+                        else -> j.skipValue()
+                    }
+                    j.endObject()
+                    if (id.isEmpty() || la.isNaN() || lo.isNaN()) continue
+                    val n = ids.size
+                    if (n == lat.size) { lat = lat.copyOf(n * 2); lon = lon.copyOf(n * 2) }
+                    ids.add(id); lat[n] = la; lon[n] = lo; stad.add(st); engels.add(la2)
+                }
+                j.endArray()
+            }
         }
-        Markers(ids, lat, lon, stad, land)
+        val n = ids.size
+        // landnaam en ISO-code één keer per verschillend land
+        val naam = HashMap<String, String>(); val code = HashMap<String, String?>()
+        val land = arrayOfNulls<String>(n); val iso = arrayOfNulls<String>(n)
+        for (i in 0 until n) engels[i]?.let { e -> land[i] = naam.getOrPut(e) { Landnaam.vertaal(e) }; iso[i] = code.getOrPut(e) { Landnaam.iso(e) } }
+        Markers(ids.toTypedArray(), lat.copyOf(n), lon.copyOf(n), stad.toTypedArray(), land, iso)
     }
 
     /** Kaartstijl van de Immich-server (licht of donker; satelliet = donkere stijl met Sentinel-2 eronder, zie Wereldkaart.kt). */

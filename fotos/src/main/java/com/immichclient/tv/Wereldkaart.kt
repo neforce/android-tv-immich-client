@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOutBack
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -111,6 +112,16 @@ import kotlin.math.sin
  * niet meer uiteenvalt) de viewer; ⏩⏪ = zoomniveau op/af; Terug = in één vlucht naar de hele wereld, nog eens Terug
  * = sectie verlaten.
  *
+ * Clusters: hiërarchisch (werelddeel → regio → land → plek), één keer per markerset op de achtergrond opgebouwd in
+ * KaartClusters.kt; per zoomniveau is het daarna alleen een wandeling door die boom (milliseconden). Lang OK op een
+ * cluster = alle foto's ervan als raster (KaartFotos.kt), ⏯ = meteen een diashow.
+ *
+ * Geheugen/ANR (21-10-2026): uitzoomen vanaf een diep niveau clusterde tijdens de vlucht op het óude (fijne) niveau
+ * over het hele wereldbeeld: duizenden markers (composables + thumbnails) tegelijk, 1,2 miljoen objecten, GC's van
+ * 2-3 s en op de 2 GB-box een vastgelopen systeem (ANR). Nu: tijdens een beweging nooit fijner dan het huidige niveau,
+ * hooguit [MAX_MARKERS] markers, zwaar werk alleen op Dispatchers.Default, en bij het verlaten van het scherm (screensaver,
+ * Home) gaat de MapView helemaal weg (MapLibre houdt anders ~100 MB native vast).
+ *
  * Soepelheid: de kaart rendert in een SurfaceView (eigen laag, geen TextureView-kopie per frame door
  * HWUI), camera's gaan met easeCamera (rechte interpolatie; animateCamera = flyTo zoomt eerst uit en laadt dan
  * tegels op alle tussenniveaus), en tijdens een beweging blijft de clusterindeling van het oude zoomniveau staan
@@ -130,13 +141,6 @@ fun wereldY(lat: Double): Double {
 fun lonVan(x: Double) = x * 360 - 180
 fun latVan(y: Double) = (2 * atan(exp((0.5 - y) * 2 * PI)) - PI / 2) * 180 / PI
 
-/** Groep markers op één plek: sleutel = zoomniveau + rastervak (stabiel binnen een zoomniveau), leden = marker-indexen (nieuwste eerst). */
-class Cluster(val sleutel: String, val wx: Double, val wy: Double, val leden: IntArray) {
-    val aantal get() = leden.size
-    /** representant voor de thumbnail: de middelste (de nieuwste is nogal eens een donkere/toevallige foto) */
-    val hoofd get() = leden[leden.size / 2]
-}
-
 /**
  * Diepste zoomniveau (standaard, ClusterNiveau.NORMAAL): op 14 is 1 px ≈ 1,5 m (op 52° breedte), dus een cluster van
  * [STRAAL_DIEP_DP] ≈ 400 m. Een vakantiepark (zwembad + huisje) blijft zo één cluster dat direct de viewer opent;
@@ -144,12 +148,12 @@ class Cluster(val sleutel: String, val wx: Double, val wy: Double, val leden: In
  * diepste niveau op 16 / 12.
  */
 private val maxZoom get() = Instellingen.cluster.maxZoom
-/** Markergrootte en de straal waarbinnen clusters samengaan (dp): op wereld/landniveau klein, dieper steeds grover. */
 private const val MARKER_DP = 56f
-private const val STRAAL_DP = 66f
-private const val STRAAL_DIEP_DP = 130f
-/** Clusterstraal (dp) per heel zoomniveau: 66 dp tot niveau 9, lineair naar 130 dp op niveau 14 (× de instelling). */
-private fun straalDp(z: Int) = (STRAAL_DP + (STRAAL_DIEP_DP - STRAAL_DP) * ((z - 9) / 5f).coerceIn(0f, 1f)) * Instellingen.cluster.straal
+/**
+ * Nooit meer markers tegelijk (de grootste gaan voor): elke marker is een Compose-laag met een thumbnail. Op een heel
+ * zoomniveau in beeld zijn het er normaal hooguit een paar tientallen.
+ */
+private const val MAX_MARKERS = 90
 
 /** Satelliet: Sentinel-2 cloudless 2023 van EOX (CC BY-NC-SA 4.0, vrij voor persoonlijk gebruik met bronvermelding, geen sleutel). */
 private const val SAT_TEGELS = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg"
@@ -171,6 +175,17 @@ const val SAT_BRON = "EOxCloudless cloudless.eox.at by EOX IT Services GmbH (Con
 @Volatile var kaartRes = 0
 /** extra LOD-verschuiving tijdens de Terug-vlucht naar de wereld */
 @Volatile var kaartVlucht = -2
+/**
+ * Tegelcache van MapLibre in het geheugen (geparste tegels buiten beeld). Meting 21-10 (3× een zoomreeks wereld → 14 →
+ * Terug): aan = native heap 89 MB / PSS 167 MB, uit = 62 MB / 143 MB, en de kaart-fps gelijk of iets beter (tegels komen
+ * dan van de schijfcache). Daarom standaard uit; test: `--ez kaart_cache true`. Prefetch-zoomdelta: `--ei kaart_prefetch N`
+ * (-1 = standaard 4; 1 gaf niets meetbaars).
+ */
+@Volatile var kaartCache = false
+@Volatile var kaartPrefetch = -1
+
+/** Wat OK / lang OK / ⏯ op een cluster doet. */
+enum class KaartActie { BEKIJK, RASTER, DIASHOW }
 
 /**
  * Stijllagen van tiles.immich.cloud (Protomaps dark, 70 lagen) die op een fotokaart op de tv niets toevoegen maar wel
@@ -186,6 +201,9 @@ private val WEG_LAGEN = listOf(
 
 class KaartStaat(private val scope: CoroutineScope) {
     var markers by mutableStateOf<Markers?>(null)
+        private set
+    /** clusterboom + niveaus (KaartClusters.kt), op de achtergrond opgebouwd zodra de markers er zijn */
+    var index by mutableStateOf<KaartIndex?>(null)
         private set
     var fout by mutableStateOf<String?>(null)
     var stijlUrl by mutableStateOf<String?>(null)
@@ -205,11 +223,33 @@ class KaartStaat(private val scope: CoroutineScope) {
     var doel by mutableStateOf<Pair<Double, Double>?>(null)
     /** teller: de kaart moet de toetsen weer krijgen (viewer gesloten) */
     var vraagFocus by mutableIntStateOf(0)
+    /** lopende berekeningen die merkbaar kunnen duren (een nieuw zoomniveau, splitsen): > 0 = laadindicator */
+    var rekent by mutableIntStateOf(0)
+    /** het laatste kaartframe was nog niet compleet: er komen nog tegels binnen */
+    var tegelsOnaf by mutableStateOf(false)
 
     init {
         scope.launch {
             runCatching { Immich.markers() }
-                .onSuccess { m -> wx = DoubleArray(m.aantal) { wereldX(m.lon[it]) }; wy = DoubleArray(m.aantal) { wereldY(m.lat[it]) }; markers = m }
+                .onSuccess { m ->
+                    val dm = Taal.ctx.resources.displayMetrics
+                    // een groep blijft één marker zolang hij op het scherm kleiner is dan ~1/3 van de schermhoogte
+                    val drempel = 0.32 * min(dm.widthPixels, dm.heightPixels)
+                    val (x, y, idx) = withContext(Dispatchers.Default) {
+                        val x = DoubleArray(m.aantal) { wereldX(m.lon[it]) }; val y = DoubleArray(m.aantal) { wereldY(m.lat[it]) }
+                        val t = System.currentTimeMillis()
+                        val idx = KaartIndex(m, x, y, dm.density, drempel)
+                        Log.i("Fotos", "kaart: ${m.aantal} markers, ${idx.landCodes.size} landen, boom in ${System.currentTimeMillis() - t} ms")
+                        Triple(x, y, idx)
+                    }
+                    wx = x; wy = y; markers = m; index = idx
+                    // alle zoomniveaus alvast uitrekenen (één keer per markerset), dan is elke latere stap meteen klaar
+                    launch(Dispatchers.Default) {
+                        val t = System.currentTimeMillis()
+                        runCatching { idx.warmOp(Instellingen.cluster.maxZoom.toInt()) }
+                        Log.i("Fotos", "kaart: niveaus klaar in ${System.currentTimeMillis() - t} ms")
+                    }
+                }
                 .onFailure { fout = it.message; Log.w("Fotos", "markers", it) }
         }
     }
@@ -224,8 +264,8 @@ class KaartStaat(private val scope: CoroutineScope) {
     /** Land met de meeste foto's → bbox (wereldeenheden) van die foto's zonder uitschieters (3e–97e percentiel). */
     fun hoofdlandBbox(): DoubleArray? {
         val m = markers ?: return null
-        val land = m.land.filterNotNull().groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: return null
-        val idx = (0 until m.aantal).filter { m.land[it] == land }
+        val land = m.iso.filterNotNull().groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: return null
+        val idx = (0 until m.aantal).filter { m.iso[it] == land }
         if (idx.size < 2) return null
         val xs = idx.map { wx[it] }.sorted(); val ys = idx.map { wy[it] }.sorted()
         val a = (idx.size * 0.03).toInt(); val b = (idx.size * 0.97).toInt().coerceAtMost(idx.size - 1)
@@ -233,6 +273,9 @@ class KaartStaat(private val scope: CoroutineScope) {
     }
 
     fun toon(a: Asset) { if (a.lat != null && a.lon != null) { doel = a.lat to a.lon; vraagFocus++ } }
+
+    /** Naam van een cluster (werelddeel, regio, land, of plaats + land). */
+    fun naam(c: Cluster): String = index?.naam(c) ?: listOfNotNull(markers?.stad?.get(c.hoofd), markers?.land?.get(c.hoofd)).joinToString(", ")
 }
 
 /** Viewer-bron vanaf de kaart: alleen id's bekend, de asset wordt opgehaald zodra hij (bijna) in beeld komt. */
@@ -250,67 +293,13 @@ class KaartBron(private val ids: List<String>, private val scope: CoroutineScope
     }
 }
 
-// ---- Clusteren ----
-
-private class Cel(val kx: Long, val ky: Long) {
-    var n = 0; var sx = 0.0; var sy = 0.0; var leden = IntArray(8); var weg = false
-    fun voeg(i: Int, x: Double, y: Double) { if (n == leden.size) leden = leden.copyOf(n * 2); leden[n++] = i; sx += x; sy += y }
-    fun slok(b: Cel) {
-        if (n + b.n > leden.size) leden = leden.copyOf(max(n + b.n, 2 * leden.size))
-        System.arraycopy(b.leden, 0, leden, n, b.n); n += b.n; sx += b.sx; sy += b.sy
-    }
-}
-
-private fun vakSleutel(kx: Long, ky: Long) = (kx shl 32) or (ky and 0xffffffffL)
-
-/**
- * Clusters voor wat in beeld is (plus een rand): rastervakken van [straalDp] px op het hele zoomniveau [z], daarna gaan
- * buurvakken waarvan de zwaartepunten dichter dan die straal bij elkaar liggen samen (grootste eerst). Alles op het hele
- * zoomniveau gerekend, zodat de indeling niet verspringt tijdens het zoomen binnen één niveau. Geeft ook de bbox (met
- * rand) terug: zolang het beeld daarbinnen blijft, hoeft er niet opnieuw geclusterd te worden.
- * [leden] = alleen deze markers (hele wereld) i.p.v. alles in beeld: om te kijken of een cluster op niveau [z] uiteenvalt.
- */
-private fun clusteren(s: KaartStaat, cam: Camera, w: Int, h: Int, pr: Float, z: Int, leden: IntArray? = null): Pair<List<Cluster>, DoubleArray> {
-    val schaalZ = 512.0 * (1L shl z) * pr
-    val straal = straalDp(z) * pr
-    val cel = straal / schaalZ
-    val rand = 2 * straal / cam.schaal
-    val x0 = cam.cx - w / 2.0 / cam.schaal - rand; val x1 = cam.cx + w / 2.0 / cam.schaal + rand
-    val y0 = cam.cy - h / 2.0 / cam.schaal - rand; val y1 = cam.cy + h / 2.0 / cam.schaal + rand
-    val vakken = HashMap<Long, Cel>()
-    val wx = s.wx; val wy = s.wy
-    fun voeg(i: Int) {
-        val x = wx[i]; val y = wy[i]
-        val kx = floor(x / cel).toLong(); val ky = floor(y / cel).toLong()
-        vakken.getOrPut(vakSleutel(kx, ky)) { Cel(kx, ky) }.voeg(i, x, y)
-    }
-    if (leden != null) for (i in leden) voeg(i)
-    else for (i in wx.indices) {
-        val x = wx[i]; if (x < x0 || x > x1) continue
-        val y = wy[i]; if (y < y0 || y > y1) continue
-        voeg(i)
-    }
-    val lijst = vakken.values.sortedByDescending { it.n }
-    for (a in lijst) {
-        if (a.weg) continue
-        for (dx in -1..1) for (dy in -1..1) {
-            if (dx == 0 && dy == 0) continue
-            val b = vakken[vakSleutel(a.kx + dx, a.ky + dy)] ?: continue
-            if (b.weg || b.n > a.n) continue
-            val d = hypot((a.sx / a.n - b.sx / b.n) * schaalZ, (a.sy / a.n - b.sy / b.n) * schaalZ)
-            if (d < straal) { a.slok(b); b.weg = true }
-        }
-    }
-    val uit = lijst.filter { !it.weg }.map { v -> Cluster("$z:${v.kx}:${v.ky}", v.sx / v.n, v.sy / v.n, v.leden.copyOf(v.n).also { it.sort() }) }
-    return uit to doubleArrayOf(x0, y0, x1, y1)
-}
-
 /** Alles wat de kaart aanstuurt (camera, clusters, focus, toetsen); leeft zolang de sectie in beeld is. */
 private class KaartMotor(
     val staat: KaartStaat, val scope: CoroutineScope, val w: Int, val h: Int, val pr: Float, val wereldZoom: Double,
-    val open: (Cluster) -> Unit,
+    val open: (Cluster, KaartActie) -> Unit,
 ) {
-    var kaart: MapLibreMap? = null
+    /** state: de stijl wordt opnieuw gezet als de kaart opnieuw gemaakt is (na terugkomst in beeld) */
+    var kaart by mutableStateOf<MapLibreMap?>(null)
     private var bezig = false
     private var opnieuw = false
     /** kwam er tijdens een lopende ronde een "stil"-verzoek (camera staat), dan daarna de focus kiezen */
@@ -336,7 +325,9 @@ private class KaartMotor(
 
     fun focusCluster() = staat.clusters.firstOrNull { it.sleutel == staat.focus }
 
-    fun frameKlaar(renderS: Double) {
+    fun frameKlaar(compleet: Boolean, renderS: Double) {
+        // tegels nog onderweg? alleen bij een wissel schrijven (dit draait per kaartframe)
+        if (staat.tegelsOnaf == compleet) staat.tegelsOnaf = !compleet
         if (meetStart == 0L) return
         meetFrames++; val ms = renderS * 1000; meetRenderMs += ms; if (ms > meetMaxMs) meetMaxMs = ms
     }
@@ -360,23 +351,30 @@ private class KaartMotor(
 
     /**
      * Opnieuw clusteren als dat nodig is. Tijdens een beweging (niet [stil]) blijft het zoomniveau van de vorige indeling
-     * staan (geen marker-churn midden in een animatie); alleen als het beeld buiten de vorige bbox komt, wordt er voor
-     * het nieuwe beeld geclusterd, op dat oude niveau. Staat de camera stil, dan geldt het echte niveau.
+     * staan (geen marker-churn midden in een animatie). Komt het beeld buiten de vorige bbox (uitzoomen, schuiven), dan
+     * opnieuw, maar nooit fijner dan het huidige niveau: vroeger werd bij het uitzoomen vanaf niveau 14 het hele
+     * wereldbeeld op niveau 14 geclusterd (duizenden markers met elk een thumbnail → ANR). Staat de camera stil, dan
+     * geldt het echte niveau. Het rekenwerk (een boomwandeling, of één keer per niveau de plekken) zit op Default.
      */
     fun hercluster(stil: Boolean, altijd: Boolean = false) {
-        if (staat.markers == null) return
+        val idx = staat.index ?: return
         val cam = staat.camera.value
-        val echtZ = floor(cam.zoom + 1e-6).toInt().coerceAtLeast(0)
-        val z = if (stil || vorigeZ < 0) echtZ else vorigeZ
+        val echtZ = floor(cam.zoom + 1e-6).toInt().coerceIn(0, 22)
         val hw = w / 2.0 / cam.schaal; val hh = h / 2.0 / cam.schaal
         val b = vorigeBbox
-        val nodig = altijd || z != vorigeZ || b == null || cam.cx - hw < b[0] || cam.cy - hh < b[1] || cam.cx + hw > b[2] || cam.cy + hh > b[3]
+        val buiten = b == null || cam.cx - hw < b[0] || cam.cy - hh < b[1] || cam.cx + hw > b[2] || cam.cy + hh > b[3]
+        val z = when { stil || vorigeZ < 0 -> echtZ; buiten -> min(vorigeZ, echtZ); else -> vorigeZ }
+        val nodig = altijd || z != vorigeZ || buiten
         if (!nodig) { if (stil) kiesFocus(); return }
         if (bezig) { opnieuw = true; opnieuwStil = opnieuwStil || stil; return }
         bezig = true
+        val rand = 2 * straalDp(z) * pr / cam.schaal
+        val vak = doubleArrayOf(cam.cx - hw - rand, cam.cy - hh - rand, cam.cx + hw + rand, cam.cy + hh + rand)
+        val traag = !idx.klaar(z)
+        if (traag) staat.rekent++
         scope.launch {
-            val (lijst, bbox) = withContext(Dispatchers.Default) { clusteren(staat, cam, w, h, pr, z) }
-            vorigeBbox = bbox; vorigeZ = z
+            val lijst = try { withContext(Dispatchers.Default) { idx.toon(z, vak, MAX_MARKERS) } } finally { if (traag) staat.rekent-- }
+            vorigeBbox = vak; vorigeZ = z
             staat.clusters = lijst
             bezig = false
             if (opnieuw) { val s2 = stil || opnieuwStil; opnieuw = false; opnieuwStil = false; hercluster(s2) } else if (stil) kiesFocus()
@@ -435,27 +433,42 @@ private class KaartMotor(
         return true
     }
 
-    /** Valt [c] op heel zoomniveau [z] nog uiteen in meer clusters? */
-    private fun splitst(c: Cluster, z: Int): Boolean =
-        clusteren(staat, staat.camera.value, w, h, pr, z, c.leden).first.size > 1
+    /** loopt er al een OK (splitsen wordt op de achtergrond uitgerekend)? dan een tweede OK negeren */
+    private var kiest = false
 
-    /** OK: inzoomen op het cluster tot het uiteenvalt; valt het (ook op het diepste niveau) niet meer uiteen of is het één foto: de viewer. */
+    /**
+     * OK: inzoomen op het cluster tot het uiteenvalt; valt het (ook op het diepste niveau) niet meer uiteen of is het één
+     * foto: de viewer. Of het uiteenvalt, rekent de clusterindex uit op Default (een nieuw niveau kan even duren).
+     */
     fun kies() {
         val map = kaart ?: return
+        val idx = staat.index ?: return
         val c = focusCluster() ?: return
-        if (c.aantal == 1) { open(c); return }
+        if (c.aantal == 1) { open(c, KaartActie.BEKIJK); return }
+        if (kiest) return
         val cam = staat.camera.value
-        var x0 = 1.0; var x1 = 0.0; var y0 = 1.0; var y1 = 0.0
-        for (i in c.leden) { val x = staat.wx[i]; val y = staat.wy[i]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y }
-        val spanX = (x1 - x0) * cam.schaal; val spanY = (y1 - y0) * cam.schaal
+        val v = idx.vak(c)
+        val spanX = (v[2] - v[0]) * cam.schaal; val spanY = (v[3] - v[1]) * cam.schaal
         val past = cam.zoom + log2(min(0.55 * w / max(spanX, 1e-6), 0.55 * h / max(spanY, 1e-6)))
         val doelZoom = min(past, maxZoom)
-        // geen zoomwinst meer, of het cluster blijft op het doelniveau toch één geheel (vakantiepark): de viewer
-        if (doelZoom - cam.zoom < 0.5 || !splitst(c, floor(doelZoom + 1e-6).toInt())) { open(c); return }
-        focusWens = c.hoofd
-        zoomDoel = doelZoom
-        map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan((y0 + y1) / 2), lonVan((x0 + x1) / 2)), doelZoom), 650)
+        // geen zoomwinst meer: de viewer
+        if (doelZoom - cam.zoom < 0.5) { open(c, KaartActie.BEKIJK); return }
+        val dz = floor(doelZoom + 1e-6).toInt()
+        kiest = true
+        val traag = !idx.klaar(dz)
+        if (traag) staat.rekent++
+        scope.launch {
+            val splitst = try { withContext(Dispatchers.Default) { idx.splitst(c, dz) } } finally { kiest = false; if (traag) staat.rekent-- }
+            // blijft het op het doelniveau toch één geheel (vakantiepark): de viewer
+            if (!splitst) { open(c, KaartActie.BEKIJK); return@launch }
+            focusWens = c.hoofd
+            zoomDoel = doelZoom
+            map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan((v[1] + v[3]) / 2), lonVan((v[0] + v[2]) / 2)), doelZoom), 650)
+        }
     }
+
+    /** Lang OK: alle foto's van het gekozen cluster als raster; ⏯: meteen als diashow. */
+    fun fotos(actie: KaartActie) { focusCluster()?.let { open(it, actie) } }
 
     /** ⏩ / ⏪: een niveau in- of uitzoomen rond het gekozen cluster (dat blijft op zijn plek); tijdens een animatie telt het door op het doel. */
     fun zoom(d: Double) {
@@ -513,8 +526,32 @@ private fun laatstePlek(): CameraPosition? {
     return CameraPosition.Builder().target(LatLng(p[0], p[1])).zoom(p[2]).build()
 }
 
+/**
+ * De kaartsectie. Is de app niet in beeld (screensaver, Home, een andere app), dan gaat de MapView er helemaal uit:
+ * MapLibre houdt anders tegels, GL-context en buffers vast (~100 MB native) terwijl een andere app of de screensaver
+ * dat geheugen nodig heeft. Terug in beeld komt hij op dezelfde plek terug (staat.bewaard).
+ */
 @Composable
 fun KaartScherm(staat: KaartStaat, nav: Nav) {
+    val levensloop = LocalLifecycleOwner.current.lifecycle
+    var inBeeld by remember { mutableStateOf(levensloop.currentState.isAtLeast(Lifecycle.State.STARTED)) }
+    DisposableEffect(levensloop) {
+        val kijker = LifecycleEventObserver { _, e ->
+            when (e) {
+                Lifecycle.Event.ON_START -> inBeeld = true
+                Lifecycle.Event.ON_STOP -> { inBeeld = false; Log.i("Fotos", "kaart: app uit beeld, MapView weg") }
+                else -> {}
+            }
+        }
+        levensloop.addObserver(kijker)
+        onDispose { levensloop.removeObserver(kijker) }
+    }
+    // alleen de MapView verdwijnt; de rest (focus, markers) blijft staan, anders landt de focus intussen in de lade
+    KaartInhoud(staat, nav, inBeeld)
+}
+
+@Composable
+private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
     val dicht = LocalDensity.current
     val scope = rememberCoroutineScope()
     val fr = remember { FocusRequester() }
@@ -530,16 +567,19 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
         // hele wereld over de breedte (polen vallen af); MapLibre: wereld = 512 × 2^zoom logische px
         val wereldZoom = log2(w / (512.0 * pr))
         val motor = remember(w, h) {
-            KaartMotor(staat, scope, w, h, pr, wereldZoom) { c ->
+            KaartMotor(staat, scope, w, h, pr, wereldZoom) { c, actie ->
                 val m = staat.markers ?: return@KaartMotor
                 val ids = c.leden.map { m.id[it] }
-                val titel = listOfNotNull(m.stad[c.hoofd], m.land[c.hoofd]).joinToString(", ").ifEmpty { Taal.s(R.string.kaart) }
-                nav.bekijk(KaartBron(ids, nav.scope), 0, titel, false, null) { staat.vraagFocus++ }
+                val titel = staat.naam(c).ifEmpty { Taal.s(R.string.kaart) }
+                when (actie) {
+                    KaartActie.RASTER -> nav.open(Scherm.KaartFotos(titel, ids, nav.scope))
+                    else -> nav.bekijk(KaartBron(ids, nav.scope), 0, titel, actie == KaartActie.DIASHOW, null) { staat.vraagFocus++ }
+                }
             }
         }
         val ctx = LocalContext.current
         val schaal = if (kaartRes in 1 until h) kaartRes.toFloat() / h else 1f
-        val mapView = remember(w, h) {
+        val mapView: MapView? = if (!inBeeld) null else remember(w, h) {
             MapLibre.getInstance(ctx)
             val start = staat.bewaard
             // startweergave: terug in de sectie = waar je was; anders de instelling (wereld / Europa / laatste plek;
@@ -562,7 +602,7 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
             MapView(ctx, opties).apply { isFocusable = false; isFocusableInTouchMode = false }
         }
         val levensloop = LocalLifecycleOwner.current.lifecycle
-        DisposableEffect(mapView) {
+        if (mapView != null) DisposableEffect(mapView) {
             mapView.onCreate(null)
             val kijker = LifecycleEventObserver { _, e ->
                 when (e) {
@@ -578,14 +618,16 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
             levensloop.addObserver(kijker)
             openKaart = mapView
             mapView.addOnDidFailLoadingMapListener { Log.w("Fotos", "kaartstijl: $it"); stijlFout = true }
-            mapView.addOnDidFinishRenderingFrameListener(MapView.OnDidFinishRenderingFrameListener { _, _, renderS -> motor.frameKlaar(renderS) })
+            mapView.addOnDidFinishRenderingFrameListener(MapView.OnDidFinishRenderingFrameListener { compleet, _, renderS -> motor.frameKlaar(compleet, renderS) })
             mapView.getMapAsync { map ->
                 map.uiSettings.apply { setAllGesturesEnabled(false); isCompassEnabled = false; isLogoEnabled = false; isAttributionEnabled = false }
                 map.setMinZoomPreference(wereldZoom)
                 map.setMaxZoomPreference(maxZoom)
                 if (kaartLod != 0) map.tileLodZoomShift = kaartLod.toDouble()
                 if (kaartFps > 0) mapView.setMaximumFps(kaartFps)
-                Log.i("Fotos", "kaart: lod $kaartLod, vlucht $kaartVlucht, res $kaartRes, texture $kaartTexture, fps ${kaartFps.takeIf { it > 0 } ?: "vrij"}, alle lagen $kaartAlles, pixelRatio ${mapView.pixelRatio}")
+                if (!kaartCache) map.setTileCacheEnabled(false)
+                if (kaartPrefetch >= 0) map.prefetchZoomDelta = kaartPrefetch
+                Log.i("Fotos", "kaart: lod $kaartLod, vlucht $kaartVlucht, res $kaartRes, texture $kaartTexture, fps ${kaartFps.takeIf { it > 0 } ?: "vrij"}, alle lagen $kaartAlles, cache $kaartCache, prefetch ${map.prefetchZoomDelta}, pixelRatio ${mapView.pixelRatio}")
                 map.addOnCameraMoveListener { motor.leesCamera(map, stil = false) }
                 map.addOnCameraIdleListener { motor.leesCamera(map, stil = true) }
                 motor.kaart = map
@@ -609,10 +651,10 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
         // stijl (instelling) ophalen en zetten zodra kaart én url er zijn
         val stijlKeuze = Instellingen.kaartStijl
         LaunchedEffect(stijlKeuze) { staat.laadStijl(stijlKeuze) }
-        LaunchedEffect(staat.stijlUrl, staat.stijlSoort) {
+        LaunchedEffect(staat.stijlUrl, staat.stijlSoort, motor.kaart) {
             val url = staat.stijlUrl ?: return@LaunchedEffect
             val soort = staat.stijlSoort ?: return@LaunchedEffect
-            while (motor.kaart == null) delay(50)
+            if (motor.kaart == null) return@LaunchedEffect
             motor.kaart?.setStyle(Style.Builder().fromUri(url)) { stijl ->
                 stijlKlaar = true
                 if (!kaartAlles) {
@@ -629,20 +671,20 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
                 }
             }
         }
-        // markers binnen: clusteren
-        LaunchedEffect(staat.markers) { if (staat.markers != null) motor.hercluster(stil = true, altijd = true) }
+        // clusterindex klaar: clusteren
+        LaunchedEffect(staat.index) { if (staat.index != null) motor.hercluster(stil = true, altijd = true) }
         // clusterniveau (instelling) veranderd terwijl de kaart open is: diepste zoom en indeling bijwerken
         val clusterKeuze = Instellingen.cluster
         LaunchedEffect(clusterKeuze) {
             while (motor.kaart == null) delay(50)
             motor.kaart?.setMaxZoomPreference(clusterKeuze.maxZoom)
-            if (staat.markers != null) motor.hercluster(stil = true, altijd = true)
+            if (staat.index != null) motor.hercluster(stil = true, altijd = true)
         }
         // startweergave "land met de meeste foto's": zodra de markers er zijn (één keer, niet bij terugkomst in de sectie)
         LaunchedEffect(staat.markers) {
             if (staat.markers == null || staat.gestart || staat.bewaard != null || Instellingen.kaartStart != KaartStart.HOOFDLAND) return@LaunchedEffect
             staat.gestart = true
-            val b = staat.hoofdlandBbox() ?: return@LaunchedEffect
+            val b = withContext(Dispatchers.Default) { staat.hoofdlandBbox() } ?: return@LaunchedEffect
             while (motor.kaart == null) delay(50)
             motor.kaart?.easeCamera(CameraUpdateFactory.newCameraPosition(motor.pasInBeeld(b)), 900)
         }
@@ -654,6 +696,7 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
             motor.vliegNaar(lat, lon)
         }
         LaunchedEffect(staat.vraagFocus) { delay(60); runCatching { fr.requestFocus() } }
+        var okLang by remember { mutableStateOf(false) }
 
         // derivedStateOf: de camera verandert elk frame, alleen de uitkomst (wel/niet terug) mag hercomponeren
         val kanTerug by remember { androidx.compose.runtime.derivedStateOf { staat.camera.value.zoom > wereldZoom + 0.2 } }
@@ -661,22 +704,36 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
 
         Box(
             Modifier.fillMaxSize().focusRequester(fr).focusable().onPreviewKeyEvent { e ->
+                val code = e.key.nativeKeyCode
+                // OK pas bij loslaten: kort = inzoomen/openen, lang (herhaling ≈ 0,4 s) = alle foto's van het cluster als raster
+                if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
+                    if (e.type == KeyEventType.KeyDown) {
+                        val herhaling = e.nativeKeyEvent.repeatCount
+                        if (herhaling == 0) okLang = false
+                        else if (!okLang) { okLang = true; motor.fotos(KaartActie.RASTER) }
+                    } else if (e.type == KeyEventType.KeyUp) {
+                        if (!okLang) motor.kies()
+                        okLang = false
+                    }
+                    hintTot = System.currentTimeMillis() + 3000
+                    return@onPreviewKeyEvent true
+                }
                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                val klaar = when (e.key.nativeKeyCode) {
+                val klaar = when (code) {
                     KeyEvent.KEYCODE_DPAD_LEFT -> motor.richting(-1, 0)
                     KeyEvent.KEYCODE_DPAD_RIGHT -> motor.richting(1, 0)
                     KeyEvent.KEYCODE_DPAD_UP -> motor.richting(0, -1)
                     KeyEvent.KEYCODE_DPAD_DOWN -> motor.richting(0, 1)
-                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { motor.kies(); true }
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { motor.zoom(1.0); true }
                     KeyEvent.KEYCODE_MEDIA_REWIND -> { motor.zoom(-1.0); true }
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY -> { motor.fotos(KaartActie.DIASHOW); true }
                     else -> false
                 }
                 if (klaar) hintTot = System.currentTimeMillis() + 3000
                 klaar
             },
         ) {
-            AndroidView(
+            if (mapView != null) AndroidView(
                 factory = { mapView },
                 modifier = Modifier.graphicsLayer { scaleX = 1 / schaal; scaleY = 1 / schaal; transformOrigin = TransformOrigin(0f, 0f) }
                     .layout { m, _ -> val p = m.measure(Constraints.fixed((w * schaal).roundToInt(), (h * schaal).roundToInt())); layout(w, h) { p.place(0, 0) } },
@@ -690,7 +747,7 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
             }
             // naam en aantal onder het gekozen cluster
             motor.focusCluster()?.let { c ->
-                key(c.sleutel) { FocusLabel(c, m!!, staat.camera, w, h) }
+                key(c.sleutel) { FocusLabel(c, staat.naam(c), staat.camera, w, h) }
             }
 
             // kop linksboven (op een lichte of satellietkaart met een donker vlak erachter, anders onleesbaar)
@@ -710,6 +767,16 @@ fun KaartScherm(staat: KaartStaat, nav: Nav) {
                 stringResource(R.string.kaart_geen_achtergrond), style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.align(Alignment.TopEnd).padding(24.dp),
             )
+            // laadindicator: markers/clusterboom nog niet klaar, een nieuw niveau wordt berekend (> 150 ms), of er komen al
+            // even tegels binnen (> 0,7 s). Zo lijkt de kaart nooit vast te zitten.
+            var rekentLang by remember { mutableStateOf(false) }
+            LaunchedEffect(staat.rekent > 0) { if (staat.rekent > 0) { delay(150); rekentLang = true } else rekentLang = false }
+            var tegelsLang by remember { mutableStateOf(false) }
+            LaunchedEffect(staat.tegelsOnaf, stijlFout) {
+                if (staat.tegelsOnaf && !stijlFout) { delay(700); tegelsLang = true; delay(20_000); tegelsLang = false } else tegelsLang = false
+            }
+            val laadt = (staat.fout == null && (staat.markers == null || staat.index == null)) || rekentLang || tegelsLang
+            Laadpil(laadt, Modifier.align(Alignment.TopEnd).padding(top = if (stijlFout && !stijlKlaar) 56.dp else 22.dp, end = 24.dp))
             // bedieningshint onderin (verdwijnt vanzelf) en bronvermelding
             val hintAlpha by animateFloatAsState(if (hint) 1f else 0f, tween(400), label = "hint")
             Text(
@@ -757,7 +824,7 @@ private fun Marker(c: Cluster, m: Markers, focus: Boolean, cam: State<Camera>, w
                 spotShadowColor = Kleur.primair; ambientShadowColor = Kleur.primair
             }.background(Kleur.vlakHoog),
         ) {
-            AsyncImage(beeld(Immich.thumb(m.id[c.hoofd])), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            AsyncImage(markerBeeld(m.id[c.hoofd]), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             Box(Modifier.fillMaxSize().border(if (focus) 3.dp else 2.dp, if (focus) Kleur.primair else Color.White, vorm))
         }
         if (c.aantal > 1) Text(
@@ -768,16 +835,45 @@ private fun Marker(c: Cluster, m: Markers, focus: Boolean, cam: State<Camera>, w
     }
 }
 
+/** Thumbnail op markermaat (≈ 146 px) gedecodeerd: 90 markers × 85 kB i.p.v. × 330 kB voor de volle thumbnail. */
 @Composable
-private fun FocusLabel(c: Cluster, m: Markers, cam: State<Camera>, w: Int, h: Int) {
-    val plaats = listOfNotNull(m.stad[c.hoofd], m.land[c.hoofd]).joinToString(", ")
+private fun markerBeeld(id: String): coil3.request.ImageRequest {
+    val ctx = LocalContext.current
+    val px = with(LocalDensity.current) { (MARKER_DP * 1.3f).dp.roundToPx() }
+    return remember(id) {
+        coil3.request.ImageRequest.Builder(ctx).data(Immich.thumb(id)).size(px, px).precision(coil3.size.Precision.INEXACT).build()
+    }
+}
+
+@Composable
+private fun FocusLabel(c: Cluster, naam: String, cam: State<Camera>, w: Int, h: Int) {
     Column(
         Modifier.opPunt(cam, w, h, c.wx, c.wy, ankerY = 0f).zIndex(2f).padding(top = (MARKER_DP * 0.65f + 12).dp)
             .background(Color(0xD9000000), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (plaats.isNotEmpty()) Text(plaats, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, textAlign = TextAlign.Center)
+        if (naam.isNotEmpty()) Text(naam, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, textAlign = TextAlign.Center)
         Text(pluralStringResource(R.plurals.fotos, c.aantal, Taal.getal(c.aantal)), style = MaterialTheme.typography.labelSmall, color = Color(0xCCFFFFFF))
+    }
+}
+
+/** "Laden…" met een draaiend ringetje; vervaagt in en uit. Draait alleen zolang hij zichtbaar is. */
+@Composable
+fun Laadpil(zichtbaar: Boolean, modifier: Modifier = Modifier) {
+    val alpha by animateFloatAsState(if (zichtbaar) 1f else 0f, tween(if (zichtbaar) 200 else 400), label = "laden")
+    if (alpha <= 0f) return
+    val draai = androidx.compose.animation.core.rememberInfiniteTransition(label = "draai")
+    val hoek by draai.animateFloat(0f, 360f, androidx.compose.animation.core.infiniteRepeatable(tween(900, easing = androidx.compose.animation.core.LinearEasing)), label = "hoek")
+    val accent = Kleur.primair
+    androidx.compose.foundation.layout.Row(
+        modifier.graphicsLayer { this.alpha = alpha }.background(Color(0xCC000000), RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(18.dp).graphicsLayer { rotationZ = hoek }) {
+            drawCircle(Color(0x40FFFFFF), style = Stroke(2.5.dp.toPx()))
+            drawArc(accent, 0f, 100f, false, style = Stroke(2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+        }
+        Text(stringResource(R.string.laden), style = MaterialTheme.typography.labelLarge, color = Color.White, modifier = Modifier.padding(start = 10.dp))
     }
 }
 

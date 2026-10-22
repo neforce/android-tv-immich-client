@@ -65,6 +65,9 @@
 
         <!-- Screensaver (DreamService, zie Dream.kt). Het label is wat de systeeminstellingen tonen waar een keuzelijst
              bestaat; dream.xml koppelt het tandwieltje aan de instellingen van de app. -->
+        <!-- GEEN eigen proces (android:process): op Android 11 start het systeem android.service.dreams.DreamActivity in het
+             standaardproces van de app en cast het de binder van de service; in een ander proces crasht dat
+             (ClassCastException BinderProxy → DreamServiceWrapper) en blijft er een zwart scherm over (getest 21-10-2026). -->
         <service
             android:name=".FotoDream"
             android:exported="true"

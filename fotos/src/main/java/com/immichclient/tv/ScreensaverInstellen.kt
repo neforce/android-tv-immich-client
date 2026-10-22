@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -304,43 +307,102 @@ private fun Stap(n: String, tekst: String) {
     }
 }
 
-/** Keuzelijst (album of persoon voor de screensaver): titel + ondertitel per regel; Terug sluit zonder keuze. */
+/** Regel in een keuzelijst: naam, ondertitel en (optioneel) een plaatje (albumomslag, gezicht = rond). */
+class KiesItem(val id: String, val naam: String, val sub: String?, val beeld: String?, val rond: Boolean = false)
+
+/**
+ * Keuzelijst (album of persoon voor de screensaver), bruikbaar met honderden items: bovenaan een zoekknop (filtert
+ * tijdens het typen, accenten tellen niet), dan de huidige keuze, dan de rest (albums: laatst bijgewerkt eerst; personen:
+ * wie het vaakst voorkomt eerst). De focus start op de huidige keuze. Terug sluit zonder keuze.
+ */
 @Composable
-fun KiesLijst(titel: String, items: List<Triple<String, String, String?>>?, gekozen: String, sluit: () -> Unit, kies: (String, String) -> Unit) {
-    BackHandler { sluit() }
+fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () -> Unit, kies: (String, String) -> Unit) {
+    var zoek by remember { mutableStateOf("") }
+    var zoekOpen by remember { mutableStateOf(false) }
+    BackHandler(enabled = !zoekOpen) { sluit() }
     val fr = remember { FocusRequester() }
-    LaunchedEffect(items) { if (!items.isNullOrEmpty()) { delay(40); runCatching { fr.requestFocus() } } }
+    val zoekKnop = remember { FocusRequester() }
+    val lijst = androidx.compose.foundation.lazy.rememberLazyListState()
+    val zichtbaar = remember(items, zoek, gekozen) {
+        val l = items.orEmpty()
+        val z = zonderAccenten(zoek.trim())
+        if (z.isNotEmpty()) l.filter { zonderAccenten(it.naam).contains(z, ignoreCase = true) }
+        else l.filter { it.id == gekozen } + l.filter { it.id != gekozen }
+    }
+    // focus op de huidige keuze (staat bovenaan) of de eerste regel; na zoeken op de eerste treffer
+    LaunchedEffect(items, zoek) {
+        if (zichtbaar.isEmpty()) { if (items != null) { delay(40); runCatching { zoekKnop.requestFocus() } }; return@LaunchedEffect }
+        lijst.scrollToItem(0)
+        delay(40)
+        repeat(5) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) }
+    }
+    var wasOpen by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Color(0xF60A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 36.dp)) {
         Column {
-            Text(titel, style = MaterialTheme.typography.displaySmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(titel, style = MaterialTheme.typography.displaySmall)
+                    if (items != null) Text(Taal.getal(zichtbaar.size) + if (zoek.isNotBlank()) "  ·  “$zoek”" else "", style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
+                }
+                if (!items.isNullOrEmpty()) Keuze(
+                    selected = zoek.isNotBlank(), onClick = { zoekOpen = true }, modifier = Modifier.focusRequester(zoekKnop),
+                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Search, null, Modifier.width(18.dp)) },
+                    tekst = zoek.ifBlank { stringResource(R.string.zoeken) },
+                )
+            }
             Spacer(Modifier.height(16.dp))
             when {
-                items == null -> Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
-                items.isEmpty() -> Text(stringResource(R.string.niets_gevonden), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(items, key = { it.first }) { (id, naam, sub) ->
-                        val eerste = id == gekozen || (gekozen.isBlank() && id == items.first().first)
-                        Knop(naam + if (id == gekozen) "  ✓" else "", sub, Modifier.fillMaxWidth().then(if (eerste) Modifier.focusRequester(fr) else Modifier)) { kies(id, naam) }
+                items == null -> Laadpil(true)
+                zichtbaar.isEmpty() -> Text(stringResource(R.string.niets_gevonden), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
+                else -> LazyColumn(state = lijst, verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 6.dp)) {
+                    items(zichtbaar, key = { it.id }) { it2 ->
+                        KiesRegel(it2, it2.id == gekozen, if (it2 === zichtbaar.first()) Modifier.focusRequester(fr) else Modifier) { kies(it2.id, it2.naam) }
                     }
                 }
             }
         }
     }
+    LaunchedEffect(zoekOpen) { if (wasOpen && !zoekOpen && zichtbaar.isEmpty()) { delay(16); runCatching { zoekKnop.requestFocus() } }; wasOpen = zoekOpen }
+    if (zoekOpen) TekstInvoer(titel, zoek, live = { zoek = it }, actie = stringResource(R.string.actie_klaar), sluit = { zoekOpen = false }) { zoek = it; zoekOpen = false }
 }
 
-/** Albums voor de keuzelijst: naam + aantal/periode. */
 @Composable
-fun albumKeuzes(): List<Triple<String, String, String?>>? {
-    val l by produceState<List<Triple<String, String, String?>>?>(null) {
-        value = runCatching { Immich.albums().filter { it.aantal > 0 }.sortedByDescending { it.bijgewerkt }.map { Triple(it.id, it.naam, albumSub(it)) } }.getOrDefault(emptyList())
+private fun KiesRegel(item: KiesItem, gekozen: Boolean, modifier: Modifier, onKlik: () -> Unit) {
+    var focus by remember { mutableStateOf(false) }
+    androidx.tv.material3.Surface(
+        onClick = onKlik, modifier = modifier.fillMaxWidth().height(64.dp).onFocusChanged { focus = it.isFocused },
+        shape = androidx.tv.material3.ClickableSurfaceDefaults.shape(RoundedCornerShape(12.dp)),
+        scale = androidx.tv.material3.ClickableSurfaceDefaults.scale(focusedScale = 1.01f),
+        colors = androidx.tv.material3.ClickableSurfaceDefaults.colors(containerColor = Kleur.vlak, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
+    ) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val vorm = if (item.rond) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(8.dp)
+            Box(Modifier.size(46.dp).clip(vorm).background(Kleur.vlakHoog)) {
+                if (item.beeld != null) coil3.compose.AsyncImage(beeld(item.beeld), null, Modifier.fillMaxSize(), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+            }
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(item.naam, style = MaterialTheme.typography.titleMedium, color = if (focus) Kleur.opPrimair else Kleur.tekst, maxLines = 1)
+                item.sub?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = if (focus) Kleur.opPrimair.copy(alpha = 0.8f) else Kleur.zacht, maxLines = 1) }
+            }
+            if (gekozen) Icon(Icons.Filled.CheckCircle, null, Modifier.padding(end = 8.dp), tint = if (focus) Kleur.opPrimair else Kleur.primair)
+        }
+    }
+}
+
+/** Albums voor de keuzelijst: omslag, naam + aantal/periode; laatst bijgewerkt eerst. */
+@Composable
+fun albumKeuzes(): List<KiesItem>? {
+    val l by produceState<List<KiesItem>?>(null) {
+        value = runCatching { Immich.albums().filter { it.aantal > 0 }.sortedByDescending { it.bijgewerkt }.map { KiesItem(it.id, it.naam, albumSub(it), it.omslag?.let(Immich::thumb)) } }.getOrDefault(emptyList())
     }
     return l
 }
 
+/** Personen: gezicht + naam; in de volgorde van Immich (favorieten, dan wie het vaakst voorkomt). */
 @Composable
-fun persoonKeuzes(): List<Triple<String, String, String?>>? {
-    val l by produceState<List<Triple<String, String, String?>>?>(null) {
-        value = runCatching { Immich.personen().sortedWith(compareBy<Persoon> { !it.favoriet }.thenBy(java.text.Collator.getInstance(Taal.locale)) { it.naam }).map { Triple(it.id, it.naam, null) } }.getOrDefault(emptyList())
+fun persoonKeuzes(): List<KiesItem>? {
+    val l by produceState<List<KiesItem>?>(null) {
+        value = runCatching { Immich.personen().map { KiesItem(it.id, it.naam, null, Immich.gezicht(it.id), rond = true) } }.getOrDefault(emptyList())
     }
     return l
 }
