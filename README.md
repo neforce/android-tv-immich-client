@@ -3,6 +3,7 @@
 [![Downloads](https://img.shields.io/github/downloads/neforce/android-tv-immich-client/total?label=downloads&color=4250af)](https://github.com/neforce/android-tv-immich-client/releases)
 [![Latest release](https://img.shields.io/github/v/release/neforce/android-tv-immich-client?color=accbfa)](https://github.com/neforce/android-tv-immich-client/releases/latest)
 [![License: MIT](https://img.shields.io/github/license/neforce/android-tv-immich-client)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/neforce)
 
 A fast, remote-friendly client for [Immich](https://immich.app) for Android TV boxes (NVIDIA Shield, Chromecast with Google TV, and other Android TV 8+ devices). Browse your whole photo library on the big screen, relive memories, search with Immich's smart search and explore your photos on a world map, all with the remote control.
 
@@ -203,6 +204,12 @@ or set the environment variables `IMMICHCLIENT_KEYSTORE`, `IMMICHCLIENT_KEYSTORE
 - Source code identifiers and comments are in Dutch. User-facing strings live in `res/values*/strings.xml`. To add a language, add a `values-xx/strings.xml`, add the code to `resourceConfigurations` in `fotos/build.gradle.kts` and to the list in `Taal.kt`, and generate localized banners with `fotos/banners.py`.
 - The app is tuned for 2 GB TV boxes: a fixed, small image cache, previews decoded at screen size, small video buffers and a lazily loaded timeline. Keep memory usage in mind when adding features.
 - `fotos/landen_bin.py` builds `assets/landen.bin` (country outlines for the map in the viewer) from Natural Earth data.
+
+## Support the project
+
+Like the app? You can support its development through [GitHub Sponsors](https://github.com/sponsors/neforce). It is appreciated, but never required.
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/neforce)
 
 ## Credits and licences
 
