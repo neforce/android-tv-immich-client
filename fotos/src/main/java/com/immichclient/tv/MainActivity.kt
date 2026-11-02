@@ -143,6 +143,10 @@ object Toetsen {
     var langeTerug by androidx.compose.runtime.mutableIntStateOf(0)
     /** geopend via het tandwieltje van de screensaver (alias ScreensaverInstellingen): naar die groep scrollen */
     @Volatile var naarScreensaver = false
+    /** de wereldkaart gebruikt OK ingedrukt houden (lang OK); overal elders is een OK-herhaling nooit een nieuwe actie */
+    @Volatile var okHerhaling = false
+    /** een scherm dat door OK (lang) geopend is, krijgt de rest van diezelfde druk (herhalingen + key-up) niet meer */
+    @Volatile var okGeslikt = false
 }
 
 enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
@@ -216,7 +220,14 @@ class MainActivity : ComponentActivity() {
         if (e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || e.keyCode == KeyEvent.KEYCODE_ENTER) {
             // eerste halve seconde na het starten helemaal geen OK (ook geen verse: dubbele druk op de tegel)
             if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount == 0 && android.os.SystemClock.uptimeMillis() - start > 500) okGezien = true
+            if (Toetsen.okGeslikt) {
+                Log.i("Fotos", "OK ingeslikt (actie ${e.action}, herhaling ${e.repeatCount})")
+                if (e.action == KeyEvent.ACTION_UP) Toetsen.okGeslikt = false
+                return true
+            }
             if (!okGezien) { Log.i("Fotos", "OK genegeerd (actie ${e.action}, herhaling ${e.repeatCount})"); return true }
+            // ingedrukt houden = key-repeat: geen tweede, derde, ... actie (viewer wisselde zo razendsnel de diashow)
+            if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount > 0 && !Toetsen.okHerhaling) return true
         }
         return super.dispatchKeyEvent(e)
     }

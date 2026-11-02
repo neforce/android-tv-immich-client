@@ -81,6 +81,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -114,17 +115,14 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     /** volgende foto van de diashow, alvast gekozen (en vooraf geladen) zodra de huidige in beeld staat */
     var diaVolgende = -1
 
+    /** willekeurige diashow zonder herhaling (zie [Schudder]) */
+    private val schudder = Schudder()
+
     /** Volgende foto voor de diashow: op volgorde of willekeurig, video's zo nodig overgeslagen; -1 = klaar. */
     fun diaDoel(): Int {
         val n = bron.aantal
-        if (Instellingen.diaWillekeurig) {
-            if (n <= 1) return -1
-            repeat(20) {
-                val i = kotlin.random.Random.nextInt(n)
-                if (i != index && (Instellingen.diaVideos || bron.op(i)?.video != true)) return i
-            }
-            return -1
-        }
+        if (Instellingen.diaWillekeurig)
+            return schudder.volgende(n, index) { Instellingen.diaVideos || bron.op(it)?.video != true }
         var i = index + 1
         while (i < n && !Instellingen.diaVideos && bron.op(i)?.video == true) i++
         return if (i < n) i else -1
@@ -137,6 +135,7 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
         if (d < 0) { diashow = false; return }
         richting = if (Instellingen.diaSchuiven) 1 else 0
         index = d
+        if (Instellingen.diaWillekeurig) schudder.markeer(d)
     }
 }
 
@@ -147,6 +146,13 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     val huidig = staat.bron.op(staat.index)
     BackHandler { if (staat.info) staat.info = false else sluit(staat.bron.op(staat.index)) }
     LaunchedEffect(Unit) { fr.requestFocus() }
+    // Tijdens een diashow het scherm aan houden: anders start de systeem-screensaver (op o.a. de Google TV
+    // Streamer niet uit te zetten) midden in de diashow. Gepauzeerd of gestopt geldt weer de gewone timeout.
+    val view = LocalView.current
+    DisposableEffect(staat.diashow) {
+        view.keepScreenOn = staat.diashow
+        onDispose { view.keepScreenOn = false }
+    }
 
     fun ga(d: Int) {
         val n = (staat.index + d)

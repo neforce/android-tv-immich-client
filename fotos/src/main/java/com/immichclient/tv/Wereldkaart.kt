@@ -700,19 +700,25 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
 
         // derivedStateOf: de camera verandert elk frame, alleen de uitkomst (wel/niet terug) mag hercomponeren
         val kanTerug by remember { androidx.compose.runtime.derivedStateOf { staat.camera.value.zoom > wereldZoom + 0.2 } }
+        DisposableEffect(Unit) { Toetsen.okHerhaling = true; onDispose { Toetsen.okHerhaling = false } }
         BackHandler(enabled = kanTerug) { hintTot = System.currentTimeMillis() + 3000; motor.terug() }
 
         Box(
             Modifier.fillMaxSize().focusRequester(fr).focusable().onPreviewKeyEvent { e ->
                 val code = e.key.nativeKeyCode
-                // OK pas bij loslaten: kort = inzoomen/openen, lang (herhaling ≈ 0,4 s) = alle foto's van het cluster als raster
+                // OK pas bij loslaten: kort = inzoomen/openen, lang (herhaling ≈ 0,4 s) = alle foto's van het cluster als raster.
+                // Na dat lang-OK slikt MainActivity de rest van dezelfde druk in (Toetsen.okGeslikt), ook de key-up.
                 if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
                     if (e.type == KeyEventType.KeyDown) {
                         val herhaling = e.nativeKeyEvent.repeatCount
                         if (herhaling == 0) okLang = false
-                        else if (!okLang) { okLang = true; motor.fotos(KaartActie.RASTER) }
+                        else if (!okLang) {
+                            okLang = true; Toetsen.okGeslikt = true
+                            Log.i("Fotos", "kaart: lang-OK opent overzicht")
+                            motor.fotos(KaartActie.RASTER)
+                        }
                     } else if (e.type == KeyEventType.KeyUp) {
-                        if (!okLang) motor.kies()
+                        if (!okLang) { Log.i("Fotos", "kaart: OK-druk (kort)"); motor.kies() }
                         okLang = false
                     }
                     hintTot = System.currentTimeMillis() + 3000
