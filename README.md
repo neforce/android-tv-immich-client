@@ -15,11 +15,12 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 
 - **Timeline**: your entire library grouped by month and day, in a justified grid like Immich itself. Thumbnails start as blurred [ThumbHash](https://evanw.github.io/thumbhash/) previews and load month by month while you scroll, so even libraries with 100,000+ items stay smooth.
 - **Memories**: "On this day" cards at the top of the timeline and a dedicated Memories screen for the past week, played as a slideshow.
-- **Viewer**: full-screen photos and videos, a blurred backdrop instead of black bars, an info panel (date, people, place, camera and lens), and an animated country map with the location of the photo.
-- **Slideshow**: adjustable interval, optional Ken Burns zoom, chronological or shuffled, fade or slide transitions.
+- **Viewer**: full-screen photos and videos, a blurred backdrop instead of black bars, an info panel (date, people, albums, place, camera and lens), and an animated country map with the location of the photo. The album(s) a photo belongs to are shown with it, also when you browse a person or the timeline.
+- **Slideshow**: adjustable interval, optional Ken Burns zoom, chronological or shuffled, fade or slide transitions. Can run with nothing but the photo on screen (no text, no progress ring).
 - **Search**: Immich smart search ("beach", "birthday cake", "dog in the snow"), text in photos (OCR) and file names, with a built-in on-screen keyboard and voice search.
 - **Explore**: people (faces) and places.
 - **Albums**: sort by recent activity, newest photos, name or size, filter shared albums, search by name.
+- **Folders**: browse your photos the way they are stored on disk, including external libraries (Immich folder view), with a slideshow per folder.
 - **World map**: all geotagged photos as clusters on a smooth vector map (dark, light or satellite), grouped by continent, region and country, splitting into places as you zoom in. Open all photos of a cluster at once or start a slideshow from it.
 - **Favorites**.
 - **Screensaver**: your photos as the system screensaver, with clock, country map and countdown ring. See [Screensaver](#screensaver).
@@ -56,9 +57,11 @@ On first start the app shows a QR code:
 
 Alternatively, expand "Or paste an existing API key" on the same page. The key needs exactly these permissions:
 
-`asset.read`, `asset.view`, `album.read`, `memory.read`, `person.read`, `map.read`, `user.read`
+`asset.read`, `asset.view`, `album.read`, `memory.read`, `person.read`, `map.read`, `user.read`, `folder.read`
 
 The app checks each permission and tells you which ones are missing. You can connect again or disconnect the device later under **Settings → Account**. To revoke access, delete the key in Immich under *Account settings → API keys*.
+
+After an update that needs a new permission (2.6 added `folder.read` for Folders), the app shows once which permission is missing and how to fix it: connect again, or tick the permission for the existing key in Immich and choose **Check again**. The same overview is always available under **Settings → Account → Key permissions**.
 
 The pairing page is only served while the pairing screen is open, only on the local network, and only with a one-time code from the QR code.
 
@@ -103,14 +106,16 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 | | Order | by date / shuffled |
 | | Videos | play / skip |
 | | Transition | fade / slide |
+| | During the slideshow | everything / no progress ring / photo only |
 | Viewer | Country map on the photo | off / small / large |
 | | Date and place bar | hide after 2 – 10 s / always show |
 | | Counter | on / off |
+| | Album name | on / off |
 | Timeline | Photo size | small / normal / large |
 | | Default order | newest / oldest first |
 | | Partner's photos | on / off |
 | | Memories at the top | on / off |
-| | Start screen | Photos / Memories / Map / Albums / Favorites |
+| | Start screen | Photos / Memories / Map / Albums / Folders / Favorites |
 | | Greeting | off / automatic ("Good evening, Anna") / custom text |
 | Map | Start view | whole world / Europe / country with the most photos / last viewed place |
 | | Clustering | fine / normal / coarse |
@@ -119,7 +124,7 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 | | Accent colour | blue / green / orange / pink / purple / grey |
 | | App name and icon | four variants for the launcher |
 | Storage | Clear image cache | |
-| Account | Server, signed in as, connect again, disconnect | |
+| Account | Server, signed in as, key permissions, connect again, disconnect | |
 
 ## Screensaver
 
@@ -128,7 +133,7 @@ The app can be the system screensaver ("dream") of your Android TV or Google TV 
 - a soft crossfade between photos and an optional slow Ken Burns zoom; landscape photos close to 3:2 or 16:9 fill the screen, other photos are shown whole on a blurred background
 - clock and date in the top left corner
 - for photos with GPS: an outline of the country with a dot where the photo was taken, plus month and place
-- a small ring that counts down to the next photo, with date, place and source (album name, person, "3 years ago") in the bottom left corner
+- a small ring that counts down to the next photo, with date, place, source (album name, person, "3 years ago") and the album(s) the photo belongs to in the bottom left corner
 - ◀ / ▶ on the remote show the previous / next photo, volume keys keep working, any other key closes the screensaver
 
 If the server can't be reached, the current photo stays on screen and the screensaver keeps retrying.
@@ -142,7 +147,7 @@ If the server can't be reached, the current photo stays on screen and the screen
 | Preview | Shows the screensaver right away |
 | Photos | All photos, Album, Favorites, Today's memories, Person, always in random order; an empty source falls back to all photos |
 | Time per photo | 5 s – 2 min |
-| Clock, Map, Ken Burns, Date and place | On / Off |
+| Clock, Map, Ken Burns, Date and place, Progress ring | On / Off (all off = photos only) |
 
 ### Turning it on
 

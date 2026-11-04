@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ConnectionPool
 import okhttp3.Dispatcher
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -232,6 +233,65 @@ object Immich {
     suspend fun willekeurig(n: Int): List<Asset> = withContext(Dispatchers.Default) {
         val a = JSONArray(post("/search/random", JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true)))
         List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    // ---- Albums van één foto (viewer: "uit album …") ----
+
+    private val albumsVan = object : LinkedHashMap<String, List<String>>(64, 0.75f, true) {
+        override fun removeEldestEntry(e: MutableMap.MutableEntry<String, List<String>>?) = size > 300
+    }
+
+    /** Namen van de albums waar deze foto in zit (gecachet; fout of geen recht = lege lijst). */
+    suspend fun albumsVan(id: String): List<String> {
+        synchronized(albumsVan) { albumsVan[id] }?.let { return it }
+        val namen = runCatching {
+            val a = JSONArray(get("/albums?assetId=$id"))
+            List(a.length()) { a.getJSONObject(it).optString("albumName") }.filter { it.isNotBlank() }.distinct()
+        }.onFailure { Log.w("Fotos", "albums van $id: ${it.message}") }.getOrNull() ?: return emptyList()
+        synchronized(albumsVan) { albumsVan[id] = namen }
+        return namen
+    }
+
+    // ---- Rechten van de sleutel (zie Rechten.kt) ----
+
+    /** Naam + rechten van de eigen sleutel; null als de server dat niet kent (dan [probeerRecht]). */
+    suspend fun sleutelRechten(): Pair<String, Set<String>>? = runCatching {
+        val o = JSONObject(get("/api-keys/me"))
+        val p = o.getJSONArray("permissions")
+        o.optString("name") to (0 until p.length()).map { p.getString(it) }.toSet()
+    }.onFailure { Log.w("Fotos", "api-keys/me: ${it.message}") }.getOrNull()
+
+    /** Recht testen via het bijbehorende endpoint: true = werkt, false = 403, null = niet te bepalen. */
+    suspend fun probeerRecht(recht: String): Boolean? {
+        val pad = when (recht) {
+            "user.read" -> "/users/me"
+            "asset.read" -> "/timeline/buckets?visibility=timeline&order=desc"
+            "album.read" -> "/albums"
+            "memory.read" -> "/memories?for=${LocalDate.now()}"
+            "person.read" -> "/people?size=1"
+            "map.read" -> "/map/markers?fileCreatedAfter=2999-01-01T00:00:00.000Z"
+            "folder.read" -> "/view/folder/unique-paths"
+            else -> return null
+        }
+        return try { get(pad); true } catch (e: IOException) {
+            if (e.message.orEmpty().startsWith("Immich 403")) false else null
+        }
+    }
+
+    // ---- Mappen (zoals de bestanden op de schijf of in een externe bibliotheek staan; recht folder.read) ----
+
+    /** Alle mappen met foto's (volledige paden zoals Immich ze kent). */
+    suspend fun mappen(): List<String> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/view/folder/unique-paths"))
+        List(a.length()) { a.getString(it) }
+    }
+
+    /** Foto's en video's direct in deze map (niet in submappen), op datum. */
+    suspend fun mapInhoud(pad: String): List<Asset> = withContext(Dispatchers.Default) {
+        val url = ("$api/view/folder".toHttpUrlOrNull() ?: throw IOException("ongeldig serveradres"))
+            .newBuilder().addQueryParameter("path", pad).build()
+        val a = JSONArray(haal(Request.Builder().url(url).build()))
+        List(a.length()) { asset(a.getJSONObject(it)) }.sortedBy { it.datum }
     }
 
     /** Eén asset (voor de viewer vanaf de kaart: daar zijn alleen id's bekend). */

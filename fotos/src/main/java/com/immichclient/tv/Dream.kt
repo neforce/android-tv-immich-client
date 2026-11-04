@@ -343,13 +343,16 @@ fun DreamScherm(staat: DreamStaat) {
         if (huidig != null) Row(Modifier.align(Alignment.BottomStart).then(verschuif).padding(start = 48.dp, bottom = 40.dp), verticalAlignment = Alignment.CenterVertically) {
             val ring = remember { Animatable(0f) }
             LaunchedEffect(staat.ronde) { ring.snapTo(0f); if (staat.ronde > 0) ring.animateTo(1f, tween(seconden * 1000, easing = LinearEasing)) }
-            VoortgangRing({ ring.value }, Modifier.size(22.dp))
-            if (staat.storing) Icon(Icons.Filled.CloudOff, null, Modifier.padding(start = 10.dp).size(20.dp), tint = Color(0xB3FFFFFF))
-            if (Instellingen.dreamInfo) Column(Modifier.padding(start = 16.dp)) {
+            if (Instellingen.dreamRing) VoortgangRing({ ring.value }, Modifier.size(22.dp))
+            if (staat.storing) Icon(Icons.Filled.CloudOff, null, Modifier.padding(start = if (Instellingen.dreamRing) 10.dp else 0.dp).size(20.dp), tint = Color(0xB3FFFFFF))
+            if (Instellingen.dreamInfo) Column(Modifier.padding(start = if (Instellingen.dreamRing || staat.storing) 16.dp else 0.dp)) {
                 Text(huidig.datum.format(Formaat.dagLang).replaceFirstChar { it.titlecase(Taal.locale) }, style = TextStyle(fontFamily = Overpass, fontSize = 18.sp, color = Color.White, shadow = SCHADUW), maxLines = 1)
                 // met kaart staat de plaats bij de stip; anders hier
                 val plaats = listOfNotNull(huidig.stad, huidig.land).joinToString(", ").takeIf { it.isNotEmpty() && !(Instellingen.dreamKaart && huidig.lat != null) }
-                val regel = listOfNotNull(plaats, bronNaam(huidig, voorraad)).joinToString("  ·  ")
+                // albums van de foto (zonder het gekozen bronalbum, dat staat er al als bronnaam)
+                val bron = bronNaam(huidig, voorraad)
+                val albums = albumNamen(huidig.id).filter { it != bron }.takeIf { it.isNotEmpty() }?.let(::albumRegel)
+                val regel = listOfNotNull(plaats, bron, albums).joinToString("  ·  ")
                 if (regel.isNotEmpty()) Text(regel, style = TextStyle(fontFamily = Overpass, fontSize = 15.sp, color = Color(0xD9FFFFFF), shadow = SCHADUW), maxLines = 1)
             }
         }

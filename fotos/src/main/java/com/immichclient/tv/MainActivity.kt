@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -122,6 +123,8 @@ sealed class Scherm {
     class KaartFotos(val titel: String, ids: List<String>, scope: CoroutineScope) : Scherm() { val staat = KaartFotosStaat(ids, scope) }
     /** alle personen (vanuit Zoeken), met zoekveld en sortering */
     class Personen(val lijst: List<Persoon>) : Scherm() { val staat = PersonenStaat(lijst) }
+    /** een map uit de mappenboom (null = het startpunt van de boom, zodra die geladen is) */
+    class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
@@ -156,6 +159,7 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     VERKENNEN(R.string.sectie_verkennen, Icons.Filled.Explore),
     KAART(R.string.sectie_kaart, Icons.Filled.Map),
     ALBUMS(R.string.sectie_albums, Icons.Filled.PhotoLibrary),
+    MAPPEN(R.string.sectie_mappen, Icons.Filled.Folder),
     FAVORIETEN(R.string.sectie_favorieten, Icons.Filled.Favorite),
     INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings),
 }
@@ -266,6 +270,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     }
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { scope.cancel() } }
     androidx.compose.runtime.LaunchedEffect(Unit) { Immich.warmZoeken() }
+    val appCtx = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    // rechten van de sleutel controleren; een nieuw ontbrekend recht één keer melden (overzicht met Opnieuw koppelen)
+    androidx.compose.runtime.LaunchedEffect(Immich.stand) { kotlinx.coroutines.delay(1500); Rechten.controleer(); Rechten.meldNieuw(appCtx) }
     val wortels = remember { HashMap<Sectie, Scherm>() }
     var sectie by remember { mutableStateOf(startSectie) }
     val stapel = remember { mutableStateListOf<Scherm>() }
@@ -295,6 +302,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.VERKENNEN -> Scherm.Verkennen(scope)
             Sectie.KAART -> Scherm.Kaart(scope)
             Sectie.ALBUMS -> Scherm.Albums(scope)
+            Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
             Sectie.FAVORIETEN -> Scherm.Tijdlijn(ctx.getString(R.string.sectie_favorieten), null, Filter(favorieten = true), Instellingen.nieuwsteEerst, false, scope)
             Sectie.INSTELLINGEN -> Scherm.Instellingen
         }
@@ -436,6 +444,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Kaart -> KaartScherm(scherm.staat, nav)
                         is Scherm.KaartFotos -> KaartFotosScherm(scherm, nav)
                         is Scherm.Personen -> PersonenScherm(scherm.staat, nav)
+                        is Scherm.Mappen -> MappenScherm(scherm, nav)
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
                         is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
                     }
@@ -443,6 +452,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             }
         }
         if (toetsen && kijker == null) ToetsenOverzicht { toetsen = false }
+        if (Rechten.open && kijker == null) RechtenScherm(opnieuwKoppelen = { Rechten.open = false; instellen = true }) { Rechten.open = false }
         kijker?.let { (k, raster, naTerug) ->
             Kijker(
                 k,

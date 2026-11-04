@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToLong
 
@@ -66,6 +68,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val immichVersie by produceState<String?>(null, Immich.stand) { value = Immich.serverVersie() }
     val versie = remember { runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "?" }
     var bevestig by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     var groetInvoer by remember { mutableStateOf(false) }
     // cachegrootte: schijf + geheugen, opnieuw gemeten na legen
     var cacheRonde by remember { mutableIntStateOf(0) }
@@ -124,6 +127,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.dia_volgorde_uitleg), listOf(stringResource(R.string.op_datum), stringResource(R.string.willekeurig)), if (Instellingen.diaWillekeurig) 1 else 0) { Instellingen.diaWillekeurig = it == 1 } }
         item { Keuzes(stringResource(R.string.videos), stringResource(R.string.dia_videos_uitleg), listOf(stringResource(R.string.afspelen), stringResource(R.string.overslaan)), if (Instellingen.diaVideos) 0 else 1) { Instellingen.diaVideos = it == 0 } }
         item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
+        item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
 
         // ---- Screensaver (item-index DREAM_ITEM = de groepskop; de volgorde hierboven niet veranderen zonder die aan te passen) ----
         if (SCREENSAVER_AAN) {
@@ -149,6 +153,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         schakel(R.string.landkaart, R.string.dream_kaart_uitleg, uitAan, Instellingen.dreamKaart) { Instellingen.dreamKaart = it }
         schakel(R.string.ken_burns, R.string.dream_ken_burns_uitleg, uitAan, Instellingen.dreamKenBurns) { Instellingen.dreamKenBurns = it }
         schakel(R.string.dream_info, R.string.dream_info_uitleg, uitAan, Instellingen.dreamInfo) { Instellingen.dreamInfo = it }
+        schakel(R.string.dream_ring, R.string.dream_ring_uitleg, uitAan, Instellingen.dreamRing) { Instellingen.dreamRing = it }
         }
 
         groep(R.string.groep_bekijken)
@@ -159,6 +164,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             Keuzes(stringResource(R.string.datum_plaats), stringResource(R.string.datum_plaats_uitleg), labels, Instellingen.BALK_TIJDEN.indexOf(Instellingen.balkMs).coerceAtLeast(0)) { Instellingen.balkMs = Instellingen.BALK_TIJDEN[it] }
         }
         item { Keuzes(stringResource(R.string.teller), stringResource(R.string.teller_uitleg, Taal.getal(12345)), uitAan, if (Instellingen.teller) 1 else 0) { Instellingen.teller = it == 1 } }
+        schakel(R.string.album_naam, R.string.album_naam_uitleg, uitAan, Instellingen.albumNaam) { Instellingen.albumNaam = it }
 
         groep(R.string.groep_tijdlijn)
         item { Keuzes(stringResource(R.string.grootte), stringResource(R.string.grootte_uitleg), RijMaat.entries.map { stringResource(it.label) }, Instellingen.rijMaat.ordinal) { Instellingen.rijMaat = RijMaat.entries[it] } }
@@ -166,7 +172,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
         schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
         item {
-            val keuzes = listOf(Sectie.FOTOS, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.FAVORIETEN)
+            val keuzes = listOf(Sectie.FOTOS, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },
                 keuzes.indexOf(Instellingen.start).coerceAtLeast(0)) { Instellingen.start = keuzes[it] }
         }
@@ -211,6 +217,15 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         groep(R.string.groep_account)
         item { Info(stringResource(R.string.immich_server), Immich.server.ifBlank { "–" }) }
         item { Info(stringResource(R.string.ingelogd_als), ik?.let { "${it.naam}  ·  ${it.email}" } ?: "…") }
+        item {
+            val mist = Rechten.ontbreekt
+            val stand = when {
+                mist == null -> stringResource(R.string.rechten_bezig)
+                mist.isEmpty() -> stringResource(R.string.rechten_ok)
+                else -> stringResource(R.string.rechten_mist_kort, mist.joinToString(", "))
+            }
+            Actie(stringResource(R.string.rechten_titel), stand) { Rechten.open = true; scope.launch { Rechten.controleer() } }
+        }
         item { Actie(stringResource(R.string.opnieuw_koppelen), stringResource(R.string.opnieuw_koppelen_uitleg)) { opnieuwKoppelen() } }
         item {
             Actie(stringResource(if (bevestig) R.string.zeker_weten else R.string.ontkoppelen), stringResource(if (bevestig) R.string.zeker_weten_uitleg else R.string.ontkoppelen_uitleg)) {
@@ -239,8 +254,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     }
 }
 
-/** Item-index van de groepskop "Screensaver" in de lijst: kop (1) + groep Diashow (1 + 5 regels). */
-private const val DREAM_ITEM = 7
+/** Item-index van de groepskop "Screensaver" in de lijst: kop (1) + groep Diashow (1 + 6 regels). */
+private const val DREAM_ITEM = 8
 /** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
 const val SCREENSAVER_AAN = true
 

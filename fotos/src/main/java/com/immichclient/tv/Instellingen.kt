@@ -57,6 +57,8 @@ object Instellingen {
     /** Video's in de diashow afspelen (anders overslaan). */
     var diaVideos by bool("dia_videos", true)
     var diaSchuiven by bool("dia_schuiven", false)
+    /** wat er tijdens een lopende diashow over de foto heen staat (ringetje, badge, datum/plaats, landkaart) */
+    var diaBeeld by keuze("dia_beeld", DiaBeeld.ALLES)
 
     // ---- Viewer ----
     var viewerKaart by keuze("viewer_kaart", KaartMaat.GROOT)
@@ -64,6 +66,8 @@ object Instellingen {
     var balkMs by getal("balk_ms", 3500)
     val BALK_TIJDEN = listOf(2000, 3500, 6000, 10000, 0)
     var teller by bool("teller", true)
+    /** album(s) van de foto in de balk en het infopaneel (handig vanuit een persoon of de tijdlijn) */
+    var albumNaam by bool("album_naam", true)
 
     // ---- Tijdlijn ----
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
@@ -98,6 +102,8 @@ object Instellingen {
     var dreamKenBurns by bool("dream_ken_burns", true)
     /** datum/plaats (en albumnaam) linksonder */
     var dreamInfo by bool("dream_info", true)
+    /** voortgangsringetje linksonder */
+    var dreamRing by bool("dream_ring", true)
     /** screensaver die er stond vóór deze app werd ingesteld (om bij "uit" terug te zetten); per apparaat */
     var dreamVorige by tekst("dream_vorige", "", perApparaat = true)
 
@@ -126,6 +132,8 @@ enum class KaartStart(@StringRes val label: Int) { WERELD(R.string.hele_wereld),
 /** Schaal op de clusterstraal en het diepste zoomniveau (zie Wereldkaart.kt: 14 ≈ 400 m per cluster op 52° breedte). */
 enum class ClusterNiveau(@StringRes val label: Int, val straal: Float, val maxZoom: Double) { FIJN(R.string.fijn, 0.7f, 16.0), NORMAAL(R.string.normaal_cluster, 1f, 14.0), GROF(R.string.grof, 1.5f, 12.0) }
 enum class KaartStijl(@StringRes val label: Int) { DONKER(R.string.donker), LICHT(R.string.licht), SATELLIET(R.string.satelliet) }
+/** Wat er tijdens een lopende diashow in beeld staat; gepauzeerd (of na een toets) komt de info gewoon terug. */
+enum class DiaBeeld(@StringRes val label: Int) { ALLES(R.string.dia_beeld_alles), ZONDER_RING(R.string.dia_beeld_zonder_ring), ALLEEN_FOTO(R.string.dia_beeld_alleen_foto) }
 /** Waar de screensaver zijn foto's vandaan haalt. */
 enum class DreamBron(@StringRes val label: Int) {
     ALLES(R.string.dream_alle_fotos), ALBUM(R.string.dream_album), FAVORIETEN(R.string.sectie_favorieten),

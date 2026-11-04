@@ -51,7 +51,7 @@ object Koppel {
     private const val TAG = "Fotos"
     private val POORTEN = 8791..8799
     /** Precies de rechten die de app nodig heeft (alleen lezen); zie x-immich-permission in de OpenAPI-spec. */
-    val RECHTEN = listOf("asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read")
+    val RECHTEN = listOf("asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read")
 
     sealed class Stand {
         data object Wacht : Stand()

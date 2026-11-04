@@ -135,7 +135,7 @@ fun KaartFotosScherm(scherm: Scherm.KaartFotos, nav: Nav) {
 
 /** Vierkante thumbnail van alleen een id (focus: iets groter, witte rand, gloed in de accentkleur). */
 @Composable
-private fun IdVak(id: String, focusDoel: Boolean, onFocusDoelKlaar: () -> Unit, onFocus: () -> Unit, onKlik: () -> Unit) {
+internal fun IdVak(id: String, focusDoel: Boolean, onFocusDoelKlaar: () -> Unit, onFocus: () -> Unit, onKlik: () -> Unit) {
     val fr = remember { FocusRequester() }
     if (focusDoel) LaunchedEffect(id) {
         repeat(5) { if (runCatching { fr.requestFocus() }.isSuccess) { onFocusDoelKlaar(); return@LaunchedEffect }; delay(16) }

@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
@@ -250,9 +251,11 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
 
         // Landkaart (zoals in een fotolijst-screensaver): alleen bij foto's met GPS, niet bij video of info. De laag zelf wacht even
         // bij een nieuw land en laat bij hetzelfde land alleen de stip glijden. Instelling: uit / klein / groot.
+        // "alleen de foto" tijdens een lopende diashow: geen kaart, balk, badge of ringetje (gepauzeerd komt alles terug)
+        val schoon = staat.diashow && Instellingen.diaBeeld == DiaBeeld.ALLEEN_FOTO
         val kaartMaat = Instellingen.viewerKaart.schaal
         KaartLaag(
-            doel = huidig?.takeIf { kaartMaat > 0f && !it.video && it.lat != null && it.lon != null && !staat.info },
+            doel = huidig?.takeIf { kaartMaat > 0f && !it.video && it.lat != null && it.lon != null && !staat.info && !schoon },
             breedtePx = breedtePx, hoogtePx = hoogtePx, maat = kaartMaat,
         )
 
@@ -260,7 +263,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
         var balk by remember { mutableStateOf(true) }
         LaunchedEffect(staat.actief, staat.index) { balk = true; val ms = Instellingen.balkMs; if (ms > 0) { delay(ms.toLong()); balk = false } }
         AnimatedVisibility(
-            (balk || staat.info) && huidig != null && !staat.speeltVideo, Modifier.align(Alignment.BottomStart),
+            ((balk && !schoon) || staat.info) && huidig != null && !staat.speeltVideo, Modifier.align(Alignment.BottomStart),
             enter = fadeIn(), exit = fadeOut(),
         ) {
             if (huidig != null) OnderBalk(huidig, staat, metKaart = huidig.lat != null && !huidig.video && kaartMaat > 0f)
@@ -280,7 +283,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
         LaunchedEffect(staat.diashow) {
             // viewer geopend zonder diashow: geen "gepauzeerd"
             if (eersteKeer) { eersteKeer = false; if (!staat.diashow) return@LaunchedEffect }
-            badge = staat.diashow; badgeRonde++
+            // geen "▶ Diashow" bij alleen de foto; "gepauzeerd" wel (dat is een reactie op je eigen toets)
+            badge = staat.diashow.takeIf { !(it && Instellingen.diaBeeld == DiaBeeld.ALLEEN_FOTO) }; badgeRonde++
         }
         LaunchedEffect(badgeRonde) { if (badge != null) { delay(if (badge == true) 5000 else 3000); badge = null } }
         Row(Modifier.align(Alignment.TopEnd).padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -297,7 +301,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                 Spacer(Modifier.width(5.dp))
                 Text(stringResource(if (laatste) R.string.diashow else R.string.diashow_pauze), style = MaterialTheme.typography.labelLarge, color = Color.White, maxLines = 1)
             }
-            AnimatedVisibility(staat.diashow, enter = fadeIn(), exit = fadeOut()) { DiaRing(staat) }
+            AnimatedVisibility(staat.diashow && Instellingen.diaBeeld == DiaBeeld.ALLES, enter = fadeIn(), exit = fadeOut()) { DiaRing(staat) }
         }
     }
 }
@@ -409,6 +413,14 @@ private fun OnderBalk(a: Asset, staat: KijkerStaat, metKaart: Boolean) {
             val plaats = listOfNotNull(a.stad, a.land).joinToString(", ")
             // met kaart (foto met GPS) staat de plaats zo bij de stip
             if (plaats.isNotEmpty() && !metKaart) Text(plaats, style = MaterialTheme.typography.bodyLarge, color = Color(0xDDFFFFFF))
+            // album(s) van de foto; het album dat je nu bekijkt niet nog eens
+            if (Instellingen.albumNaam) {
+                val namen = albumNamen(a.id).filter { it != staat.titel }
+                if (namen.isNotEmpty()) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.PhotoLibrary, null, Modifier.size(16.dp), tint = Color(0xBBFFFFFF))
+                    Text("  " + albumRegel(namen), style = MaterialTheme.typography.bodyMedium, color = Color(0xBBFFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
         }
     }
 }
@@ -429,6 +441,8 @@ private fun InfoPaneel(a: Asset, metKaartSprong: Boolean) {
             if (d != null) {
                 d.omschrijving?.let { Text(it, style = MaterialTheme.typography.bodyLarge, maxLines = 4, overflow = TextOverflow.Ellipsis) }
                 if (d.mensen.isNotEmpty()) InfoRegel(Icons.Filled.People, d.mensen.joinToString(", "), null, maxRegels = 3)
+                val albums = albumNamen(a.id)
+                if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
                 d.plaats?.let { InfoRegel(Icons.Filled.Place, it, null) }
                 if (a.lat != null && a.lon != null) {
                     KaartKlein(a.lat, a.lon, Modifier.fillMaxWidth().height(150.dp).background(Kleur.vlak, RoundedCornerShape(12.dp)))
@@ -456,3 +470,11 @@ private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels
         }
     }
 }
+
+/** Albums waar deze foto in zit (leeg zolang ze laden of als er geen zijn). */
+@Composable
+fun albumNamen(id: String): List<String> =
+    produceState(emptyList(), id) { delay(150); value = Immich.albumsVan(id) }.value
+
+/** "Vakantie 2023", of "Vakantie 2023 + 2" bij meer albums. */
+fun albumRegel(namen: List<String>) = if (namen.size <= 1) namen.firstOrNull().orEmpty() else namen[0] + "  + " + (namen.size - 1)
