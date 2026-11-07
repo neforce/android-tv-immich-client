@@ -504,6 +504,8 @@
     <string name="dream_ring_uitleg">Pequeño anillo abajo a la izquierda que se llena hasta la siguiente foto</string>
     <string name="album_naam">Nombre del álbum</string>
     <string name="album_naam_uitleg">Muestra en qué álbum(es) está una foto, p. ej. al ver una persona</string>
+    <string name="wazig">Fondo desenfocado</string>
+    <string name="wazig_uitleg">Rellena los bordes alrededor de fotos y vídeos con una versión desenfocada; desactivado = negro (también en el salvapantallas)</string>
     <plurals name="mappen_aantal">
         <item quantity="many">%d carpetas</item>
         <item quantity="one">%d carpeta</item>

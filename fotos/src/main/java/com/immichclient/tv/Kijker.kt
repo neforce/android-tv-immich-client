@@ -2,6 +2,8 @@ package com.immichclient.tv
 
 import android.util.Log
 import android.view.KeyEvent
+import android.view.SurfaceView
+import android.view.TextureView
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedContent
@@ -56,10 +58,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -95,7 +99,9 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.PlayerView
+import androidx.media3.common.C
+import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -331,7 +337,7 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
         val mod = Modifier.fillMaxSize().graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }
         // 1) thumbhash 2) thumbnail (al in de cache van het raster) 3) preview: er staat dus altijd meteen iets
         val hash = remember(a.thumbhash) { a.thumbhash?.let { ThumbHash.bitmap(it) } }
-        if (hash != null) {
+        if (hash != null && Instellingen.wazig) {
             // achtergrond i.p.v. zwarte balken: de thumbhash (32 px) schermvullend opgerekt = gratis 'blur', verdonkerd
             Image(hash, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.7f)
             Box(Modifier.fillMaxSize().background(Color(0x8C000000)))
@@ -360,13 +366,29 @@ private fun Video(a: Asset, staat: KijkerStaat) {
         ExoPlayer.Builder(ctx).setLoadControl(buffers)
             .setMediaSourceFactory(DefaultMediaSourceFactory(OkHttpDataSource.Factory(Immich.http))).build()
     }
+    // Eigen weergave i.p.v. PlayerView: verhouding uit onVideoSizeChanged (bij 90°/270° al omgewisseld) en voor
+    // gedraaide video's (staande telefoonvideo's, vaak MOV) een TextureView. Met een SurfaceView laat Android de
+    // draaiing aan de hardware-overlay over en die negeert hem op sommige tv-boxen: de video staat dan op zijn kant.
+    // Een TextureView tekent via de GPU met de transformatie van de decoder, die klopt overal. Ongedraaide video's
+    // houden de SurfaceView (zuiniger, en HDR werkt alleen daar).
+    var verhouding by remember { mutableFloatStateOf(0f) }
+    var gedraaid by remember { mutableStateOf(false) }
     DisposableEffect(a.id) {
         staat.videoFout = false
+        verhouding = 0f; gedraaid = false
         speler.setMediaItem(MediaItem.fromUri(Immich.video(a.id)))
         speler.prepare()
         speler.playWhenReady = true
         val luister = object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) { staat.speeltVideo = isPlaying }
+            override fun onVideoSizeChanged(v: VideoSize) {
+                if (v.width > 0 && v.height > 0) verhouding = v.width * v.pixelWidthHeightRatio / v.height
+            }
+            override fun onTracksChanged(tracks: Tracks) {
+                val f = tracks.groups.firstOrNull { it.type == C.TRACK_TYPE_VIDEO }?.getTrackFormat(0) ?: return
+                gedraaid = f.rotationDegrees == 90 || f.rotationDegrees == 270
+                if (gedraaid) Log.i("Fotos", "video ${a.id}: gedraaid ${f.rotationDegrees}°, TextureView")
+            }
             override fun onPlaybackStateChanged(s: Int) {
                 // diashow: na de video door naar de volgende
                 if (s == Player.STATE_ENDED) { staat.speeltVideo = false; if (staat.diashow) staat.diaVerder() }
@@ -385,7 +407,20 @@ private fun Video(a: Asset, staat: KijkerStaat) {
         }
     }
     Box(Modifier.fillMaxSize()) {
-        AndroidView(factory = { PlayerView(it).apply { player = speler; useController = false } }, modifier = Modifier.fillMaxSize())
+        if (verhouding > 0f) key(gedraaid) {
+            AndroidView(
+                factory = { c ->
+                    if (gedraaid) TextureView(c).also { speler.setVideoTextureView(it) }
+                    else SurfaceView(c).also { speler.setVideoSurfaceView(it) }
+                },
+                onRelease = { v ->
+                    if (v is TextureView) speler.clearVideoTextureView(v)
+                    else if (v is SurfaceView) speler.clearVideoSurfaceView(v)
+                },
+                // past binnen het scherm, staand of liggend (aspectRatio probeert eerst de hoogte, anders de breedte)
+                modifier = Modifier.align(Alignment.Center).aspectRatio(verhouding.coerceIn(0.2f, 5f), matchHeightConstraintsFirst = true),
+            )
+        }
         if (staat.videoFout) Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Filled.VideocamOff, null, Modifier.size(44.dp), tint = Kleur.zacht)
             Text(stringResource(R.string.video_fout), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(top = 8.dp))

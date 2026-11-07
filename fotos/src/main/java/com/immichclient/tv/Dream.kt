@@ -395,7 +395,7 @@ private fun DreamBeeld(a: Asset, actief: Boolean, kenBurns: Boolean, duurMs: Lon
             translationX = (z - 1f) * size.width * 0.5f * richting
         }
         val hash = remember(a.thumbhash) { a.thumbhash?.let { ThumbHash.bitmap(it) } }
-        if (hash != null && !vullen) {
+        if (hash != null && !vullen && Instellingen.wazig) {
             Image(hash, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.7f)
             Box(Modifier.fillMaxSize().background(Color(0x8C000000)))
             Image(hash, null, Modifier.aspectRatio(a.ratio.coerceIn(0.3f, 4f), matchHeightConstraintsFirst = true), contentScale = ContentScale.FillBounds)

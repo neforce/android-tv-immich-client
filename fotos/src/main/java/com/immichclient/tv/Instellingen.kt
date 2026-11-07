@@ -68,6 +68,8 @@ object Instellingen {
     var teller by bool("teller", true)
     /** album(s) van de foto in de balk en het infopaneel (handig vanuit een persoon of de tijdlijn) */
     var albumNaam by bool("album_naam", true)
+    /** wazige thumbhash-achtergrond rond foto's/video's die het scherm niet vullen (viewer + screensaver); uit = zwart */
+    var wazig by bool("wazige_achtergrond", true)
 
     // ---- Tijdlijn ----
     var rijMaat by keuze("rij", RijMaat.NORMAAL)

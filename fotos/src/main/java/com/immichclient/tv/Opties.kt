@@ -165,6 +165,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         }
         item { Keuzes(stringResource(R.string.teller), stringResource(R.string.teller_uitleg, Taal.getal(12345)), uitAan, if (Instellingen.teller) 1 else 0) { Instellingen.teller = it == 1 } }
         schakel(R.string.album_naam, R.string.album_naam_uitleg, uitAan, Instellingen.albumNaam) { Instellingen.albumNaam = it }
+        schakel(R.string.wazig, R.string.wazig_uitleg, uitAan, Instellingen.wazig) { Instellingen.wazig = it }
 
         groep(R.string.groep_tijdlijn)
         item { Keuzes(stringResource(R.string.grootte), stringResource(R.string.grootte_uitleg), RijMaat.entries.map { stringResource(it.label) }, Instellingen.rijMaat.ordinal) { Instellingen.rijMaat = RijMaat.entries[it] } }
