@@ -1,5 +1,7 @@
 package com.immichclient.tv
 
+import android.content.Context
+import android.os.Handler
 import android.util.Log
 import android.view.KeyEvent
 import android.view.SurfaceView
@@ -97,6 +99,11 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.Renderer
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import androidx.media3.exoplayer.video.MediaCodecVideoRenderer
+import androidx.media3.exoplayer.video.VideoRendererEventListener
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.C
@@ -108,6 +115,13 @@ import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
+
+/**
+ * Test (`--ez video_zonder_placeholder true`): doet alsof dit apparaat geen placeholder-surface mag gebruiken, zoals
+ * Media3 dat voor o.a. veel Fire TV-modellen beslist (codecNeedsSetOutputSurfaceWorkaround). Dan start de decoder pas
+ * als er een echt oppervlak is.
+ */
+@Volatile var videoZonderPlaceholder = false
 
 class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: Boolean) {
     var index by mutableIntStateOf(start)
@@ -363,7 +377,18 @@ private fun Video(a: Asset, staat: KijkerStaat) {
             .setPrioritizeTimeOverSizeThresholds(false)
             .setBackBuffer(0, false)
             .build()
-        ExoPlayer.Builder(ctx).setLoadControl(buffers)
+        val renderers = if (!videoZonderPlaceholder) DefaultRenderersFactory(ctx) else object : DefaultRenderersFactory(ctx) {
+            override fun buildVideoRenderers(
+                context: Context, extensionRendererMode: Int, mediaCodecSelector: MediaCodecSelector, enableDecoderFallback: Boolean,
+                eventHandler: Handler, eventListener: VideoRendererEventListener, allowedVideoJoiningTimeMs: Long, out: ArrayList<Renderer>,
+            ) {
+                out.add(object : MediaCodecVideoRenderer(context, codecAdapterFactory, mediaCodecSelector, allowedVideoJoiningTimeMs,
+                    enableDecoderFallback, eventHandler, eventListener, 50) {
+                    override fun codecNeedsSetOutputSurfaceWorkaround(name: String) = true
+                })
+            }
+        }
+        ExoPlayer.Builder(ctx, renderers).setLoadControl(buffers)
             .setMediaSourceFactory(DefaultMediaSourceFactory(OkHttpDataSource.Factory(Immich.http))).build()
     }
     // Eigen weergave i.p.v. PlayerView: verhouding uit onVideoSizeChanged (bij 90°/270° al omgewisseld) en voor
@@ -407,7 +432,11 @@ private fun Video(a: Asset, staat: KijkerStaat) {
         }
     }
     Box(Modifier.fillMaxSize()) {
-        if (verhouding > 0f) key(gedraaid) {
+        // Het oppervlak moet er METEEN zijn: op apparaten zonder placeholder-surface (Media3: o.a. veel Fire TV's) start de
+        // decoder pas met een echt oppervlak, dus wachten op de videomaat bleef daar eeuwig wachten (2.7: geen enkele video
+        // speelde). Tot de maat bekend is de verhouding uit Immich (staande video = staand), daarna die van de video zelf.
+        val r = if (verhouding > 0f) verhouding else a.ratio
+        key(gedraaid) {
             AndroidView(
                 factory = { c ->
                     if (gedraaid) TextureView(c).also { speler.setVideoTextureView(it) }
@@ -418,7 +447,7 @@ private fun Video(a: Asset, staat: KijkerStaat) {
                     else if (v is SurfaceView) speler.clearVideoSurfaceView(v)
                 },
                 // past binnen het scherm, staand of liggend (aspectRatio probeert eerst de hoogte, anders de breedte)
-                modifier = Modifier.align(Alignment.Center).aspectRatio(verhouding.coerceIn(0.2f, 5f), matchHeightConstraintsFirst = true),
+                modifier = Modifier.align(Alignment.Center).aspectRatio(r.coerceIn(0.2f, 5f), matchHeightConstraintsFirst = true),
             )
         }
         if (staat.videoFout) Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {

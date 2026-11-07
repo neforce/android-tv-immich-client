@@ -203,6 +203,7 @@ class MainActivity : ComponentActivity() {
             kaartFps = intent.getIntExtra("kaart_fps", 0); kaartAlles = intent.getBooleanExtra("kaart_alles", false)
             kaartRes = intent.getIntExtra("kaart_res", kaartRes); kaartVlucht = intent.getIntExtra("kaart_vlucht", kaartVlucht)
             scrolBalkUit = intent.getBooleanExtra("geen_balk", false)
+            videoZonderPlaceholder = intent.getBooleanExtra("video_zonder_placeholder", false)
             kaartCache = intent.getBooleanExtra("kaart_cache", kaartCache); kaartPrefetch = intent.getIntExtra("kaart_prefetch", -1)
         }
         setContent { FotosThema { FotosApp(finish = ::finish, herstart = ::recreate, testIndex = testIndex, startSectie = startSectie, instelTest = instelTest, taalTest = taalTest) } }
