@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -165,18 +166,22 @@ fun FotoVak(
     // Bewust geen tv-Surface: daarvan staan er tientallen tegelijk in beeld en bij snel scrollen telt elke ms.
     var focus by remember { mutableStateOf(false) }
     val schaal by animateFloatAsState(if (focus) 1.06f else 1f, tween(140), label = "schaal")
+    // Focus en klik staan vóór de graphicsLayer: anders rekent "bring into view" met de geschaalde rechthoek, die tijdens
+    // de schaalanimatie verandert, en schuift de hele lijst bij elke focuswissel een paar px heen en weer.
+    // zIndex: de vergrote foto (en zijn witte rand) boven de buurfoto's tekenen.
     Box(
         modifier.size(breedte, hoogte)
+            .zIndex(if (focus) 1f else 0f)
+            .focusRequester(fr)
+            .onFocusChanged { focus = it.isFocused; if (it.isFocused) onFocus() }
+            .clickable(interactionSource = null, indication = null, onClick = onKlik)
             .graphicsLayer {
                 scaleX = schaal; scaleY = schaal; shape = vorm; clip = true
                 // zachte blauwe gloed rond de gekozen foto (schaduw van de laag: één RenderNode-eigenschap, geen extra tekenwerk)
                 shadowElevation = if (focus) 16.dp.toPx() else 0f
                 spotShadowColor = Kleur.primair; ambientShadowColor = Kleur.primair
             }
-            .background(Kleur.vlak)
-            .focusRequester(fr)
-            .onFocusChanged { focus = it.isFocused; if (it.isFocused) onFocus() }
-            .clickable(interactionSource = null, indication = null, onClick = onKlik),
+            .background(Kleur.vlak),
     ) {
         val hash = remember(asset.thumbhash) { asset.thumbhash?.let { ThumbHash.bitmap(it) } }
         if (hash != null) Image(hash, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)

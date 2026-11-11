@@ -158,7 +158,8 @@ private fun FotoRegel(regel: Regel, staat: RasterStaat, onKlik: (Asset) -> Unit)
         horizontalArrangement = Arrangement.spacedBy(GROEP_TUSSEN.dp),
     ) {
         for (stuk in regel.stukken) {
-            Column {
+            var stukFocus by remember { mutableStateOf(false) }
+            Column(Modifier.zIndex(if (stukFocus) 1f else 0f).onFocusChanged { stukFocus = it.hasFocus }) {
                 if (regel.metKop) Text(
                     stuk.kop.orEmpty(), style = MaterialTheme.typography.titleSmall, maxLines = 1,
                     modifier = Modifier.height(KOP_HOOGTE.dp).padding(top = 6.dp),

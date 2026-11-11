@@ -76,9 +76,15 @@ class Resultaten(private val scope: CoroutineScope) {
 
     fun start(l: suspend (Int) -> Pagina) {
         job?.cancel()
-        laad = l; assets = emptyList(); volgende = 1; fout = null; gezocht = true
+        laad = l; assets = emptyList(); volgende = 1; fout = null; gezocht = true; bezig = false
         scope.launch { raster.lijst.scrollToItem(0) }
         meer()
+    }
+
+    /** Terug naar de beginstand (suggesties). */
+    fun wis() {
+        job?.cancel()
+        laad = null; assets = emptyList(); volgende = null; fout = null; gezocht = false; bezig = false
     }
 
     fun meer() {
@@ -87,8 +93,9 @@ class Resultaten(private val scope: CoroutineScope) {
         if (bezig) return
         bezig = true
         job = scope.launch {
-            runCatching { l(p) }
-                .onSuccess { r -> assets = assets + r.assets.filter { a -> assets.none { it.id == a.id } }; volgende = r.volgende }
+            val uit = runCatching { l(p) }
+            if (laad !== l) return@launch  // intussen een nieuwe zoekopdracht of gewist (ook: geannuleerd)
+            uit.onSuccess { r -> assets = assets + r.assets.filter { a -> assets.none { it.id == a.id } }; volgende = r.volgende }
                 .onFailure { fout = it.message; volgende = null; Log.w("Fotos", "zoeken", it) }
             bezig = false
         }
@@ -116,19 +123,29 @@ class ZoekStaat(scope: CoroutineScope) {
         scope.launch { Immich.warmZoeken() }
     }
 
+    /** Zoekopdracht zonder tekst, alleen het type (alle video's / alle foto's, op datum). */
+    val alleenType get() = tekst.isBlank() && type != ZoekType.ALLES
+
     fun zoek(c: Context) {
         val t = tekst.trim()
-        if (t.isEmpty()) return
+        val ty = type
+        if (t.isEmpty()) {
+            // geen tekst: met Foto's/Video's gekozen = alles van dat type op datum, anders niets te zoeken
+            if (ty.video == null) { if (res.gezocht) res.wis(); return }
+            if (volgorde == ZoekVolgorde.RELEVANTIE) volgorde = ZoekVolgorde.NIEUW
+            focusOpResultaat = true
+            res.start { p -> Immich.zoekTekst(null, "", p, ty.video) }
+            return
+        }
         Recent.voegToe(c, t)
         focusOpResultaat = true
         val m = modus
-        val ty = type
         res.start { p ->
             when (m) {
                 ZoekModus.SLIM -> Immich.zoekSlim(t, p, ty.video)
-                ZoekModus.TEKST -> Immich.zoekTekst(t, "ocr", p)
-                ZoekModus.NAAM -> Immich.zoekTekst(t, "originalFileName", p)
-            }.let { r -> if (ty.video == null || m == ZoekModus.SLIM) r else r.copy(assets = r.assets.filter { it.video == ty.video }) }
+                ZoekModus.TEKST -> Immich.zoekTekst(t, "ocr", p, ty.video)
+                ZoekModus.NAAM -> Immich.zoekTekst(t, "originalFileName", p, ty.video)
+            }
         }
     }
 }
@@ -179,7 +196,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
         }
         FotoRaster(
             rijen = rijen, staat = staat.res.raster, bovenAantal = 1,
-            onKlik = { a -> nav.bekijk(bron, gesorteerd.indexOf(a), ctx.getString(R.string.zoeken_titel, staat.tekst), false, staat.res.raster) },
+            onKlik = { a -> nav.bekijk(bron, gesorteerd.indexOf(a), if (staat.alleenType) ctx.getString(staat.type.label) else ctx.getString(R.string.zoeken_titel, staat.tekst), false, staat.res.raster) },
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "boven") {

@@ -168,9 +168,16 @@ object Immich {
     suspend fun zoekPlaats(stad: String, pagina: Int): Pagina =
         pagina(JSONObject(post("/search/metadata", JSONObject().put("city", stad).put("size", 250).put("page", pagina).put("order", "desc"))))
 
-    /** Bestandsnaam / omschrijving / OCR (tekst op de foto). */
-    suspend fun zoekTekst(tekst: String, veld: String, pagina: Int): Pagina =
-        pagina(JSONObject(post("/search/metadata", JSONObject().put(veld, tekst).put("size", 250).put("page", pagina).put("order", "desc"))))
+    /**
+     * Bestandsnaam / omschrijving / OCR (tekst op de foto), eventueel alleen foto's of video's. Zonder tekst = alle
+     * foto's of video's van de tijdlijn, nieuwste eerst (zoals het type-filter in de web-app).
+     */
+    suspend fun zoekTekst(tekst: String?, veld: String, pagina: Int, alleenVideo: Boolean? = null): Pagina {
+        val body = JSONObject().put("size", 250).put("page", pagina).put("order", "desc")
+        if (tekst != null) body.put(veld, tekst) else body.put("visibility", "timeline")
+        if (alleenVideo != null) body.put("type", if (alleenVideo) "VIDEO" else "IMAGE")
+        return pagina(JSONObject(post("/search/metadata", body)))
+    }
 
     private suspend fun pagina(o: JSONObject): Pagina = withContext(Dispatchers.Default) {
         val a = o.getJSONObject("assets")
