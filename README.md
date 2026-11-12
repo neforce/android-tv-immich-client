@@ -47,6 +47,10 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 2. Copy it to your TV box, for example with the **Downloader** app (Play Store) or a USB stick and a file manager, and install it. You may need to allow installing apps from unknown sources for that app.
 3. Open the app, choose your language and pair it with your Immich server (see below).
 
+### Updates
+
+From 2.8 on the app checks at startup whether a newer release is available here on GitHub and tells you once. Choose **Update now**: the app downloads the APK, checks its SHA-256 against the checksum GitHub lists for the file and hands it to Android, which asks you to confirm. The first time, Android may ask you to allow this app to install apps (unknown sources); the app opens that setting for you. You can also check by hand under **Settings → About → Updates**, or turn the check off (Settings → show **All**). After an update the app shows once what's new.
+
 ## Pairing with Immich
 
 On first start the app shows a QR code:
@@ -99,6 +103,8 @@ The receiver requires the `DUMP` permission, so only the adb shell can send it, 
 
 ## Settings
 
+The first line, **Show settings**, switches between **Basic** (the settings most people look for) and **All**.
+
 | Group | Setting | Options |
 |---|---|---|
 | Slideshow | Time per photo | 3 – 20 s (default 6 s) |
@@ -145,9 +151,14 @@ If the server can't be reached, the current photo stays on screen and the screen
 | Screensaver | On / Off (needs the permission below) |
 | Set up on this device | Status (screensaver active, permission, Developer options, USB and network debugging) and setup help |
 | Preview | Shows the screensaver right away |
-| Photos | All photos, Album, Favorites, Today's memories, Person, always in random order; an empty source falls back to all photos |
+| Photos | All photos, Albums, Favorites, Today's memories, People, Albums + people; an empty source falls back to all photos |
+| Albums / People | Pick one or more (OK selects or deselects); with Albums + people both lists are combined |
+| Show other album | If a photo is also in another album, show that name instead of the source (e.g. "Birthday" instead of "Screensaver") |
+| From | All years, or only photos from a given year on |
+| Order | Random, oldest first or newest first; in date order the screensaver continues where it left off |
 | Time per photo | 5 s – 2 min |
-| Clock, Map, Ken Burns, Date and place, Progress ring | On / Off (all off = photos only) |
+| Map | Off / Small / Large |
+| Clock, Ken Burns, Date and place, Progress ring | On / Off (all off = photos only) |
 
 ### Turning it on
 

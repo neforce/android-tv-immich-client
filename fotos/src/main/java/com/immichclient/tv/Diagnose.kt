@@ -151,6 +151,7 @@ object Diagnose {
 /** Instellingen → Over → Diagnose: de laatste afsluitingen met tijd, reden en het begin van de stacktrace. */
 @Composable
 fun DiagnoseLaag(sluit: () -> Unit) {
+    Lagen.Open()
     val ctx = LocalContext.current
     val fr = remember { FocusRequester() }
     BackHandler { sluit() }

@@ -149,6 +149,11 @@
 
     <string name="instellingen">Paramètres</string>
     <string name="instellingen_sub">"◀ ▶ ou OK : choisir une valeur   ·   Retour maintenu : menu   ·   INFO : touches"</string>
+    <string name="instellingen_tonen">Afficher les réglages</string>
+    <string name="instellingen_basis">Essentiels</string>
+    <string name="instellingen_alle">Tous</string>
+    <string name="instellingen_basis_uitleg">Seulement les réglages les plus utilisés. Choisissez Tous pour le reste.</string>
+    <string name="instellingen_alle_uitleg">Tout, y compris les réglages avancés</string>
     <string name="uit">Désactivé</string>
     <string name="aan">Activé</string>
     <string name="groep_diashow">Diaporama</string>
@@ -382,9 +387,19 @@
     <string name="dream_voorbeeld">Aperçu</string>
     <string name="dream_voorbeeld_uitleg">Afficher l\'écran de veille maintenant ; n\'importe quelle touche le ferme</string>
     <string name="dream_bron">Photos</string>
-    <string name="dream_bron_uitleg">Quelles photos l\'écran de veille affiche (toujours dans un ordre aléatoire)</string>
+    <string name="dream_bron_uitleg">Quelles photos l\'écran de veille affiche</string>
     <string name="dream_alle_fotos">Toutes les photos</string>
     <string name="dream_album">Album</string>
+    <string name="dream_personen">Personnes</string>
+    <string name="dream_combi">Albums + personnes</string>
+    <string name="dream_vanaf">À partir de</string>
+    <string name="dream_vanaf_uitleg">Seulement les photos de cette année ou plus récentes</string>
+    <string name="alle_jaren">Toutes les années</string>
+    <string name="dream_volgorde_uitleg">Aléatoire, ou par date (reprend là où il s\'était arrêté)</string>
+    <string name="dream_albums">Albums</string>
+    <string name="dream_albums_hint">"%1$d choisi(s)  ·  OK = oui/non"</string>
+    <string name="dream_ander_album">Afficher l\'autre album</string>
+    <string name="dream_ander_album_uitleg">Si une photo est aussi dans un autre album, afficher ce nom (p. ex. « Anniversaire » au lieu de « Écran de veille »)</string>
     <string name="dream_herinneringen">Souvenirs du jour</string>
     <string name="dream_persoon">Personne</string>
     <string name="dream_kies">Pas encore choisi – appuyez sur OK</string>
@@ -531,4 +546,30 @@
     <string name="recht_person_read">Personnes</string>
     <string name="recht_map_read">Carte du monde</string>
     <string name="recht_folder_read">Dossiers</string>
+    <string name="update_titel">La version %1$s est disponible</string>
+    <string name="update_sub">Vous avez la version %1$s</string>
+    <string name="update_downloaden">Téléchargement… %1$d%%</string>
+    <string name="update_installeren">Installation…</string>
+    <string name="update_toestemming">Autorisez d\'abord cette application à installer des mises à jour (sources inconnues), puis choisissez à nouveau Mettre à jour.</string>
+    <string name="update_toestemming_knop">Ouvrir le réglage</string>
+    <string name="update_fout">Échec de la mise à jour : %1$s</string>
+    <string name="update_nu">Mettre à jour</string>
+    <string name="update_later">Plus tard</string>
+    <string name="nieuw_titel">Nouveautés de la %1$s</string>
+    <string name="updates">Mises à jour</string>
+    <string name="update_beschikbaar">La version %1$s est disponible. OK pour mettre à jour</string>
+    <string name="update_bezig">Vérification…</string>
+    <string name="update_actueel">Vous avez la dernière version. OK pour vérifier à nouveau</string>
+    <string name="update_controleer">OK pour chercher une nouvelle version</string>
+    <string name="update_auto">Rechercher des mises à jour</string>
+    <string name="update_auto_uitleg">Chercher une nouvelle version sur GitHub au démarrage</string>
+    <string name="nieuw_regel">Nouveautés</string>
+    <string name="nieuw_regel_uitleg">Changements de cette version</string>
+    <string-array name="wat_nieuw">
+        <item>Carte dans l\'écran de veille : désactivée, petite ou grande</item>
+        <item>Écran de veille : choisir plusieurs albums et afficher l\'album propre de la photo (p. ex. « Anniversaire » au lieu de « Écran de veille »)</item>
+        <item>Écran de veille : plusieurs personnes, ou albums et personnes ensemble, à partir d\'une année, au hasard ou par date</item>
+        <item>Réglages : Essentiels ou Tous, pour une liste plus courte</item>
+        <item>Mises à jour : l\'application signale une nouvelle version et peut se mettre à jour</item>
+    </string-array>
 </resources>

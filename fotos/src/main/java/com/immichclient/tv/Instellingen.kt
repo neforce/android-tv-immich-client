@@ -38,7 +38,7 @@ object Instellingen {
         operator fun setValue(t: Any?, p: KProperty<*>, v: T) { waarde = v }
     }
 
-    private fun bool(k: String, d: Boolean) = Instelling(k, d, false, { p, s, x -> p.getBoolean(s, x) }, { e, s, v -> e.putBoolean(s, v) }).also { alle += it }
+    private fun bool(k: String, d: Boolean, perApparaat: Boolean = false) = Instelling(k, d, perApparaat, { p, s, x -> p.getBoolean(s, x) }, { e, s, v -> e.putBoolean(s, v) }).also { alle += it }
     private fun getal(k: String, d: Int) = Instelling(k, d, false, { p, s, x -> p.getInt(s, x) }, { e, s, v -> e.putInt(s, v) }).also { alle += it }
     private fun tekst(k: String, d: String, perApparaat: Boolean = false) =
         Instelling(k, d, perApparaat, { p, s, x -> p.getString(s, x) ?: x }, { e, s, v -> e.putString(s, v) }).also { alle += it }
@@ -87,20 +87,37 @@ object Instellingen {
     /** laatst bekeken plek: "lat,lon,zoom" (voor KaartStart.LAATST) */
     var kaartLaatst by tekst("kaart_laatst", "")
 
+    // ---- Instellingenscherm ----
+    /** alle instellingen tonen (anders alleen de basis); per apparaat */
+    var alleInstellingen by bool("alle_instellingen", false, perApparaat = true)
+    /** bij het starten kijken of er een nieuwe versie op GitHub staat; per apparaat */
+    var updateCheck by bool("update_check", true, perApparaat = true)
+
     // ---- Uiterlijk ----
     var accent by keuze("accent", Accent.BLAUW)
     var uiterlijk by keuze("uiterlijk", Uiterlijk.FOTOS, perApparaat = true)
 
     // ---- Screensaver (DreamService, zie Dream.kt) ----
     var dreamBron by keuze("dream_bron", DreamBron.ALLES)
+    /** gekozen album-id's, gescheiden door komma's (t/m 2.7.2 altijd één) */
     var dreamAlbum by tekst("dream_album", "")
+    /** namen bij [dreamAlbum], gescheiden door regeleinden (zelfde volgorde) */
     var dreamAlbumNaam by tekst("dream_album_naam", "")
+    /** bij een bronalbum/favorieten: zit de foto ook in een ander album, dan dié naam tonen i.p.v. de bron */
+    var dreamAnderAlbum by bool("dream_ander_album", true)
+    /** gekozen personen (komma-lijst; t/m 2.7.2 altijd één) en hun namen (regeleinden), zoals de albums */
     var dreamPersoon by tekst("dream_persoon", "")
     var dreamPersoonNaam by tekst("dream_persoon_naam", "")
+    /** alleen foto's vanaf dit jaar (0 = alle jaren) */
+    var dreamVanaf by getal("dream_vanaf", 0)
+    var dreamVolgorde by keuze("dream_volgorde", DreamVolgorde.WILLEKEURIG)
+    /** bij een vaste volgorde: waar de screensaver was ("bron-sleutel<TAB>datum"), zodat hij daar verdergaat */
+    var dreamStand by tekst("dream_stand", "")
     var dreamSeconden by getal("dream_s", 15)
     val DREAM_TIJDEN = listOf(5, 8, 10, 15, 20, 30, 45, 60, 120)
     var dreamKlok by bool("dream_klok", true)
-    var dreamKaart by bool("dream_kaart", true)
+    /** landkaart rechtsonder: uit / klein / groot (t/m 2.7.2 een schakelaar "dream_kaart", zie [laad]) */
+    var dreamKaart by keuze("dream_kaart_maat", KaartMaat.GROOT)
     var dreamKenBurns by bool("dream_ken_burns", true)
     /** datum/plaats (en albumnaam) linksonder */
     var dreamInfo by bool("dream_info", true)
@@ -118,9 +135,31 @@ object Instellingen {
         // t/m 1.2 heette de startweergave "land met de meeste foto's" anders; dat is de enige bewaarde waarde die niet
         // (meer) in KaartStart staat, en die zou anders stil terugvallen op de standaard (hele wereld)
         p.getString("kaart_start$na", null)?.let { oud -> if (KaartStart.entries.none { it.name == oud }) kaartStart = KaartStart.HOOFDLAND }
+        // t/m 2.7.2 was de screensaver-kaart alleen aan/uit
+        if (!p.contains("dream_kaart_maat$na") && !p.getBoolean("dream_kaart$na", true)) dreamKaart = KaartMaat.UIT
         // het manifest is de waarheid voor naam/icoon (bijv. na een herinstallatie met oude prefs)
         Uiterlijk.entries.firstOrNull { it.aan(c) }?.let { if (it != uiterlijk) uiterlijk = it }
     }
+
+    val dreamAlbums get() = lijst(dreamAlbum)
+    val dreamAlbumNamen get() = namen(dreamAlbumNaam)
+    val dreamPersonen get() = lijst(dreamPersoon)
+    val dreamPersoonNamen get() = namen(dreamPersoonNaam)
+    /** keuzes voor "vanaf": 0 = alle jaren, dan 2000 … dit jaar */
+    val DREAM_JAREN get() = listOf(0) + (2000..java.time.LocalDate.now().year)
+    private fun lijst(s: String) = s.split(',').filter { it.isNotBlank() }
+    private fun namen(s: String) = s.split('\n').filter { it.isNotBlank() }
+    /** (id, naam)-paren van een keuze, namen aangevuld als ze ontbreken */
+    fun paren(ids: List<String>, namen: List<String>) = ids.mapIndexed { i, id -> id to namen.getOrElse(i) { "" } }
+    private fun wissel(ids: List<String>, nm: List<String>, id: String, naam: String): Pair<String, String> {
+        val p = paren(ids, nm).toMutableList()
+        if (!p.removeAll { it.first == id }) p += id to naam
+        return p.joinToString(",") { it.first } to p.joinToString("\n") { it.second }
+    }
+    /** Album aan/uit zetten in de screensaver-keuze. */
+    fun wisselDreamAlbum(id: String, naam: String) { wissel(dreamAlbums, dreamAlbumNamen, id, naam).let { dreamAlbum = it.first; dreamAlbumNaam = it.second } }
+    /** Persoon aan/uit zetten in de screensaver-keuze. */
+    fun wisselDreamPersoon(id: String, naam: String) { wissel(dreamPersonen, dreamPersoonNamen, id, naam).let { dreamPersoon = it.first; dreamPersoonNaam = it.second } }
 
     /** Diashow-tijd in ms. */
     val diaMs get() = diaSeconden * 1000L
@@ -138,9 +177,13 @@ enum class KaartStijl(@StringRes val label: Int) { DONKER(R.string.donker), LICH
 enum class DiaBeeld(@StringRes val label: Int) { ALLES(R.string.dia_beeld_alles), ZONDER_RING(R.string.dia_beeld_zonder_ring), ALLEEN_FOTO(R.string.dia_beeld_alleen_foto) }
 /** Waar de screensaver zijn foto's vandaan haalt. */
 enum class DreamBron(@StringRes val label: Int) {
-    ALLES(R.string.dream_alle_fotos), ALBUM(R.string.dream_album), FAVORIETEN(R.string.sectie_favorieten),
-    HERINNERINGEN(R.string.dream_herinneringen), PERSOON(R.string.dream_persoon),
+    ALLES(R.string.dream_alle_fotos), ALBUM(R.string.dream_albums), FAVORIETEN(R.string.sectie_favorieten),
+    HERINNERINGEN(R.string.dream_herinneringen), PERSOON(R.string.dream_personen),
+    /** de gekozen albums én de gekozen personen samen */
+    COMBI(R.string.dream_combi),
 }
+/** Volgorde van de screensaver-foto's; bij een vaste volgorde gaat hij verder waar hij was ([Instellingen.dreamStand]). */
+enum class DreamVolgorde(@StringRes val label: Int) { WILLEKEURIG(R.string.willekeurig), OUDSTE(R.string.oudste_eerst), NIEUWSTE(R.string.nieuwste_eerst) }
 
 /** Accentkleur door de hele app (Kleur.primair e.d. lezen deze). */
 enum class Accent(@StringRes val label: Int, val primair: Color, val donker: Color, val opPrimair: Color) {

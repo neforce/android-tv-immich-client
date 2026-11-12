@@ -143,6 +143,11 @@
 
     <string name="instellingen">Instellingen</string>
     <string name="instellingen_sub">"◀ ▶ of OK: waarde kiezen   ·   Terug lang ingedrukt: menu   ·   INFO: toetsen"</string>
+    <string name="instellingen_tonen">Instellingen tonen</string>
+    <string name="instellingen_basis">Basis</string>
+    <string name="instellingen_alle">Alle</string>
+    <string name="instellingen_basis_uitleg">Alleen de meestgebruikte instellingen. Kies Alle voor de rest.</string>
+    <string name="instellingen_alle_uitleg">Alles, ook de uitgebreide instellingen</string>
     <string name="uit">Uit</string>
     <string name="aan">Aan</string>
     <string name="groep_diashow">Diashow</string>
@@ -376,9 +381,19 @@
     <string name="dream_voorbeeld">Voorbeeld</string>
     <string name="dream_voorbeeld_uitleg">De screensaver nu laten zien; elke toets sluit hem</string>
     <string name="dream_bron">Foto\'s</string>
-    <string name="dream_bron_uitleg">Welke foto\'s de screensaver toont (altijd in willekeurige volgorde)</string>
+    <string name="dream_bron_uitleg">Welke foto\'s de screensaver toont</string>
     <string name="dream_alle_fotos">Alle foto\'s</string>
     <string name="dream_album">Album</string>
+    <string name="dream_personen">Personen</string>
+    <string name="dream_combi">Albums + personen</string>
+    <string name="dream_vanaf">Vanaf</string>
+    <string name="dream_vanaf_uitleg">Alleen foto\'s uit dit jaar of later</string>
+    <string name="alle_jaren">Alle jaren</string>
+    <string name="dream_volgorde_uitleg">Willekeurig, of op datum (gaat verder waar hij was)</string>
+    <string name="dream_albums">Albums</string>
+    <string name="dream_albums_hint">"%1$d gekozen  ·  OK = aan/uit"</string>
+    <string name="dream_ander_album">Ander album tonen</string>
+    <string name="dream_ander_album_uitleg">Zit een foto ook in een ander album, dan dié naam tonen (bijv. “Verjaardag” i.p.v. “Screensaver”)</string>
     <string name="dream_herinneringen">Herinneringen van vandaag</string>
     <string name="dream_persoon">Persoon</string>
     <string name="dream_kies">Nog niet gekozen – druk op OK</string>
@@ -524,4 +539,30 @@
     <string name="recht_person_read">Personen</string>
     <string name="recht_map_read">Wereldkaart</string>
     <string name="recht_folder_read">Mappen</string>
+    <string name="update_titel">Versie %1$s is beschikbaar</string>
+    <string name="update_sub">Je hebt versie %1$s</string>
+    <string name="update_downloaden">Downloaden… %1$d%%</string>
+    <string name="update_installeren">Installeren…</string>
+    <string name="update_toestemming">Geef deze app eerst toestemming om updates te installeren (onbekende bronnen). Kies daarna opnieuw Bijwerken.</string>
+    <string name="update_toestemming_knop">Instelling openen</string>
+    <string name="update_fout">Bijwerken mislukt: %1$s</string>
+    <string name="update_nu">Nu bijwerken</string>
+    <string name="update_later">Later</string>
+    <string name="nieuw_titel">Nieuw in %1$s</string>
+    <string name="updates">Updates</string>
+    <string name="update_beschikbaar">Versie %1$s is beschikbaar. OK om bij te werken</string>
+    <string name="update_bezig">Controleren…</string>
+    <string name="update_actueel">Je hebt de nieuwste versie. OK om opnieuw te kijken</string>
+    <string name="update_controleer">OK om te kijken of er een nieuwe versie is</string>
+    <string name="update_auto">Op updates controleren</string>
+    <string name="update_auto_uitleg">Bij het starten op GitHub kijken of er een nieuwe versie is</string>
+    <string name="nieuw_regel">Wat is er nieuw</string>
+    <string name="nieuw_regel_uitleg">Wijzigingen in deze versie</string>
+    <string-array name="wat_nieuw">
+        <item>Landkaart in de screensaver: uit, klein of groot</item>
+        <item>Screensaver: meerdere albums kiezen, en de eigen albumnaam van de foto tonen (bijv. “Verjaardag” i.p.v. “Screensaver”)</item>
+        <item>Screensaver: meerdere personen, of albums en personen samen, vanaf een bepaald jaar, willekeurig of op datum</item>
+        <item>Instellingen: Basis of Alle, zodat de lijst kort blijft</item>
+        <item>Updates: de app meldt een nieuwe versie en kan zichzelf bijwerken</item>
+    </string-array>
 </resources>

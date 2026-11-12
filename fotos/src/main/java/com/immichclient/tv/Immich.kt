@@ -237,8 +237,10 @@ object Immich {
     }
 
     /** Willekeurige foto's (screensaver "alle foto's"): /search/random geeft [n] assets met exif in één call. */
-    suspend fun willekeurig(n: Int): List<Asset> = withContext(Dispatchers.Default) {
-        val a = JSONArray(post("/search/random", JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true)))
+    suspend fun willekeurig(n: Int, vanafJaar: Int = 0): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true)
+        if (vanafJaar > 0) q.put("takenAfter", "$vanafJaar-01-01T00:00:00.000Z")
+        val a = JSONArray(post("/search/random", q))
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
 

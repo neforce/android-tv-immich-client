@@ -136,8 +136,18 @@ class DreamStaat {
 class DreamVoorraad {
     private val wachtrij = ArrayDeque<Asset>()
     private val recent = ArrayDeque<String>()
-    private var maanden: List<Maand>? = null
-    private var filter: Filter? = null
+    /** maandlijsten per bron-filter (meerdere albums = meerdere filters) */
+    private var maanden: Map<Filter, List<Maand>>? = null
+    private var maandenSig: String? = null
+    /** foto-id → naam van het gekozen album/de persoon waar hij uit kwam (voor het bronlabel) */
+    private val uitNaam = HashMap<String, String>()
+    // vaste volgorde: maandsleutels in volgorde, waar we zijn, en de foto's van de huidige maand
+    private var reeks: List<String>? = null
+    private var reeksPer: Map<Filter, Set<String>> = emptyMap()
+    private var reeksSig: String? = null
+    private var reeksIdx = 0
+    private var hervatNa: java.time.LocalDateTime? = null
+    private val reeksBuf = ArrayDeque<Asset>()
     private val maandCache = object : LinkedHashMap<String, List<Asset>>(4, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<Asset>>?) = size > 3
     }
@@ -152,6 +162,7 @@ class DreamVoorraad {
     private val slot = kotlinx.coroutines.sync.Mutex()
 
     fun uitBron(id: String) = id in bronIds
+    fun naamVan(id: String): String? = uitNaam[id]
 
     suspend fun volgende(): Asset? = slot.withLock {
         vooruit?.let { vooruit = null; return@withLock it }
@@ -166,36 +177,111 @@ class DreamVoorraad {
         SingletonImageLoader.get(ctx).enqueue(previewVerzoek(ctx, a.id))
     }
 
-    private suspend fun haal(): Asset? = when (Instellingen.dreamBron) {
-        DreamBron.ALLES -> uitPortie()
-        DreamBron.HERINNERINGEN -> markeer(uitHerinneringen()) ?: uitPortie()
-        DreamBron.ALBUM -> Instellingen.dreamAlbum.takeIf { it.isNotBlank() }?.let { markeer(uitMaanden(Filter(albumId = it))) } ?: uitPortie()
-        DreamBron.FAVORIETEN -> markeer(uitMaanden(Filter(favorieten = true))) ?: uitPortie()
-        DreamBron.PERSOON -> Instellingen.dreamPersoon.takeIf { it.isNotBlank() }?.let { markeer(uitMaanden(Filter(persoonId = it))) } ?: uitPortie()
+    /** De bron als filters (tijdlijn-endpoint), elk met de naam voor het label; leeg = niets gekozen. */
+    private fun bronFilters(): List<Pair<Filter, String?>> {
+        val i = Instellingen
+        val albums = i.paren(i.dreamAlbums, i.dreamAlbumNamen).map { (id, n) -> Filter(albumId = id) to n.ifBlank { null } }
+        val personen = i.paren(i.dreamPersonen, i.dreamPersoonNamen).map { (id, n) -> Filter(persoonId = id) to n.ifBlank { null } }
+        return when (i.dreamBron) {
+            DreamBron.ALLES -> listOf(Filter() to null)
+            DreamBron.HERINNERINGEN -> emptyList()
+            DreamBron.ALBUM -> albums
+            DreamBron.FAVORIETEN -> listOf(Filter(favorieten = true) to null)
+            DreamBron.PERSOON -> personen
+            DreamBron.COMBI -> albums + personen
+        }
+    }
+
+    private suspend fun haal(): Asset? {
+        if (Instellingen.dreamBron == DreamBron.HERINNERINGEN) return markeer(uitHerinneringen()) ?: uitPortie()
+        val fs = bronFilters()
+        if (fs.isEmpty()) return uitPortie() // nog niets gekozen: willekeurige foto's
+        if (Instellingen.dreamVolgorde != DreamVolgorde.WILLEKEURIG) return markeer(uitReeks(fs)) ?: uitPortie()
+        if (Instellingen.dreamBron == DreamBron.ALLES) return uitPortie()
+        return markeer(uitMaanden(fs)) ?: uitPortie()
+    }
+
+    private fun jaarVan(m: Maand) = m.sleutel.take(4).toIntOrNull() ?: 0
+
+    /** Maandlijsten van alle filters (vanaf het gekozen jaar); een filter dat faalt (album weg) overslaan zolang er een ander is. */
+    private suspend fun maandenVan(fs: List<Filter>): Map<Filter, List<Maand>> {
+        val vanaf = Instellingen.dreamVanaf
+        val per = LinkedHashMap<Filter, List<Maand>>()
+        var fout: Throwable? = null
+        for (f in fs) runCatching { per[f] = Immich.maanden(f, true).filter { it.aantal > 0 && jaarVan(it) >= vanaf } }.onFailure { fout = it }
+        if (per.isEmpty()) fout?.let { throw it }
+        return per
+    }
+
+    /**
+     * Vaste volgorde (oudste/nieuwste eerst) over alle filters samen: maand voor maand, foto's samengevoegd en op datum.
+     * Na de laatste begint hij opnieuw. De plek wordt bewaard, zodat de volgende keer de screensaver daar verdergaat.
+     */
+    private suspend fun uitReeks(fs: List<Pair<Filter, String?>>): Asset? {
+        val oud = Instellingen.dreamVolgorde == DreamVolgorde.OUDSTE
+        val sig = "${Instellingen.dreamBron}|${fs.map { it.first }}|${Instellingen.dreamVanaf}|$oud".hashCode().toString()
+        if (reeksSig != sig || reeks == null) {
+            val per = maandenVan(fs.map { it.first })
+            reeksPer = per.mapValues { (_, ms) -> ms.map { it.sleutel }.toSet() }
+            val sleutels = per.values.flatten().map { it.sleutel }.distinct().sorted().let { if (oud) it else it.reversed() }
+            reeks = sleutels; reeksSig = sig; reeksBuf.clear(); reeksIdx = 0; hervatNa = null
+            val stand = Instellingen.dreamStand.split('\t')
+            if (stand.getOrNull(0) == sig) stand.getOrNull(1)?.let { d ->
+                runCatching { java.time.LocalDateTime.parse(d) }.getOrNull()?.let { h ->
+                    hervatNa = h
+                    val ym = d.take(7)
+                    reeksIdx = sleutels.indexOfFirst { if (oud) it.take(7) >= ym else it.take(7) <= ym }.coerceAtLeast(0)
+                }
+            }
+            Log.i("Fotos", "screensaver: vaste volgorde, ${sleutels.size} maanden, start bij ${sleutels.getOrNull(reeksIdx)} (na $hervatNa)")
+        }
+        val ms = reeks.orEmpty()
+        if (ms.isEmpty()) return null
+        var omloop = 0
+        while (reeksBuf.isEmpty()) {
+            if (reeksIdx >= ms.size) { reeksIdx = 0; hervatNa = null; if (++omloop > 1) return null }
+            val sleutel = ms[reeksIdx++]
+            val samen = LinkedHashMap<String, Pair<Asset, String?>>()
+            for ((f, naam) in fs) if (sleutel in reeksPer[f].orEmpty())
+                Immich.maand(f, true, sleutel).filter { !it.video }.forEach { samen.putIfAbsent(it.id, it to naam) }
+            var foto = samen.values.sortedBy { it.first.datum }.let { if (oud) it else it.reversed() }
+            hervatNa?.let { h -> foto = foto.filter { if (oud) it.first.datum > h else it.first.datum < h } }
+            hervatNa = null
+            for ((a, naam) in foto) { naam?.let { uitNaam[a.id] = it }; reeksBuf.addLast(a) }
+        }
+        val a = reeksBuf.removeFirst()
+        Instellingen.dreamStand = "$sig\t${a.datum}"
+        return a
     }
 
     private fun markeer(a: Asset?): Asset? {
-        if (a != null) { bronIds.add(a.id); if (bronIds.size > 120) bronIds.remove(bronIds.first()) }
+        if (a != null) { bronIds.add(a.id); if (bronIds.size > 120) bronIds.remove(bronIds.first()).also { if (uitNaam.size > 400) uitNaam.clear() } }
         return a
     }
 
     private suspend fun uitPortie(): Asset? {
-        if (wachtrij.size < 3) wachtrij.addAll(Immich.willekeurig(40).filter { !it.video && it.id !in recent && wachtrij.none { w -> w.id == it.id } })
+        if (wachtrij.size < 3) wachtrij.addAll(Immich.willekeurig(40, Instellingen.dreamVanaf).filter { !it.video && it.id !in recent && wachtrij.none { w -> w.id == it.id } })
         return wachtrij.removeFirstOrNull()?.let { onthoud(it) }
     }
 
-    private suspend fun uitMaanden(f: Filter): Asset? {
-        if (filter != f || maanden == null) { maanden = Immich.maanden(f, true).filter { it.aantal > 0 }; filter = f; maandCache.clear(); recent.clear() }
-        val ms = maanden ?: return null
-        val totaal = ms.sumOf { it.aantal }
+    /** Willekeurige foto uit een of meer bronnen, gewogen naar het aantal foto's (een groot album komt vaker aan de beurt). */
+    private suspend fun uitMaanden(bron: List<Pair<Filter, String?>>): Asset? {
+        val fs = bron.map { it.first }
+        val sig = "$fs|${Instellingen.dreamVanaf}"
+        if (maandenSig != sig || maanden == null) {
+            maanden = maandenVan(fs); maandenSig = sig; maandCache.clear(); recent.clear()
+        }
+        val alle = maanden.orEmpty().flatMap { (f, ms) -> ms.map { f to it } }
+        val totaal = alle.sumOf { it.second.aantal }
         if (totaal == 0) return null
         var laatste: Asset? = null
         repeat(10) {
             var r = Random.nextInt(totaal)
-            val m = ms.first { r -= it.aantal; r < 0 }
-            val lijst = maandCache.getOrPut(m.sleutel) { Immich.maand(f, true, m.sleutel) }
+            val (f, m) = alle.first { r -= it.second.aantal; r < 0 }
+            val lijst = maandCache.getOrPut("$f|${m.sleutel}") { Immich.maand(f, true, m.sleutel) }
             val a = lijst.filter { !it.video }.randomOrNull() ?: return@repeat
             laatste = a
+            bron.firstOrNull { it.first == f }?.second?.let { uitNaam[a.id] = it }
             if (a.id !in recent) return onthoud(a, totaal)
         }
         return laatste?.let { onthoud(it, totaal) }
@@ -209,7 +295,10 @@ class DreamVoorraad {
         }
         val l = herinneringen ?: return null
         if (l.isEmpty()) return null
-        return l[herinneringIndex++ % l.size]
+        // "vanaf": herinneringen van vóór dat jaar overslaan
+        val vanaf = Instellingen.dreamVanaf
+        repeat(l.size) { val a = l[herinneringIndex++ % l.size]; if (a.datum.year >= vanaf) return a }
+        return null
     }
 
     private fun onthoud(a: Asset, totaal: Int = Int.MAX_VALUE): Asset {
@@ -236,8 +325,9 @@ private fun bronNaam(a: Asset, voorraad: DreamVoorraad): String? {
     if (Instellingen.dreamBron == DreamBron.ALLES || !voorraad.uitBron(a.id)) return null
     return when (Instellingen.dreamBron) {
         DreamBron.ALLES -> null
-        DreamBron.ALBUM -> Instellingen.dreamAlbumNaam.ifBlank { null }
-        DreamBron.PERSOON -> Instellingen.dreamPersoonNaam.ifBlank { null }
+        DreamBron.ALBUM -> voorraad.naamVan(a.id) ?: Instellingen.dreamAlbumNamen.singleOrNull()
+        DreamBron.PERSOON -> voorraad.naamVan(a.id) ?: Instellingen.dreamPersoonNamen.singleOrNull()
+        DreamBron.COMBI -> voorraad.naamVan(a.id)
         DreamBron.FAVORIETEN -> stringResource(R.string.sectie_favorieten)
         DreamBron.HERINNERINGEN -> (LocalDate.now().year - a.datum.year).takeIf { it > 0 }?.let { pluralStringResource(R.plurals.jaren_geleden, it, it) }
     }
@@ -335,7 +425,8 @@ fun DreamScherm(staat: DreamStaat) {
             if (a != null) DreamBeeld(a, actief = a.id == huidig?.id, kenBurns = kenBurns, duurMs = seconden * 1000L + 2500, zicht = { zicht })
         }
 
-        if (Instellingen.dreamKaart) KaartLaag(doel = huidig?.takeIf { it.lat != null && it.lon != null }, breedtePx = breedtePx, hoogtePx = hoogtePx)
+        val dreamKaart = Instellingen.dreamKaart.schaal
+        if (dreamKaart > 0f) KaartLaag(doel = huidig?.takeIf { it.lat != null && it.lon != null }, breedtePx = breedtePx, hoogtePx = hoogtePx, maat = dreamKaart)
 
         if (Instellingen.dreamKlok) Klok(Modifier.align(Alignment.TopStart).then(verschuif).padding(start = 48.dp, top = 36.dp))
 
@@ -348,11 +439,15 @@ fun DreamScherm(staat: DreamStaat) {
             if (Instellingen.dreamInfo) Column(Modifier.padding(start = if (Instellingen.dreamRing || staat.storing) 16.dp else 0.dp)) {
                 Text(huidig.datum.format(Formaat.dagLang).replaceFirstChar { it.titlecase(Taal.locale) }, style = TextStyle(fontFamily = Overpass, fontSize = 18.sp, color = Color.White, shadow = SCHADUW), maxLines = 1)
                 // met kaart staat de plaats bij de stip; anders hier
-                val plaats = listOfNotNull(huidig.stad, huidig.land).joinToString(", ").takeIf { it.isNotEmpty() && !(Instellingen.dreamKaart && huidig.lat != null) }
+                val plaats = listOfNotNull(huidig.stad, huidig.land).joinToString(", ").takeIf { it.isNotEmpty() && !(Instellingen.dreamKaart != KaartMaat.UIT && huidig.lat != null) }
                 // albums van de foto (zonder het gekozen bronalbum, dat staat er al als bronnaam)
                 val bron = bronNaam(huidig, voorraad)
-                val albums = albumNamen(huidig.id).filter { it != bron }.takeIf { it.isNotEmpty() }?.let(::albumRegel)
-                val regel = listOfNotNull(plaats, bron, albums).joinToString("  ·  ")
+                // andere albums dan de bron(nen) zelf; met "ander album tonen" vervangen die de bronnaam ("Verjaardag" i.p.v. "Screensaver")
+                val bronnen = if (Instellingen.dreamBron == DreamBron.ALBUM || Instellingen.dreamBron == DreamBron.COMBI) Instellingen.dreamAlbumNamen.toSet() + listOfNotNull(bron) else setOfNotNull(bron)
+                val anders = albumNamen(huidig.id).filter { it !in bronnen }
+                val albums = anders.takeIf { it.isNotEmpty() }?.let(::albumRegel)
+                val toonBron = bron.takeUnless { albums != null && Instellingen.dreamAnderAlbum }
+                val regel = listOfNotNull(plaats, toonBron, albums).joinToString("  ·  ")
                 if (regel.isNotEmpty()) Text(regel, style = TextStyle(fontFamily = Overpass, fontSize = 15.sp, color = Color(0xD9FFFFFF), shadow = SCHADUW), maxLines = 1)
             }
         }

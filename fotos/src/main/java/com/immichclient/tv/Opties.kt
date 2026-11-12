@@ -70,6 +70,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     var bevestig by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var groetInvoer by remember { mutableStateOf(false) }
+    var controleren by remember { mutableStateOf(false) }
     // cachegrootte: schijf + geheugen, opnieuw gemeten na legen
     var cacheRonde by remember { mutableIntStateOf(0) }
     val cacheMaat = stringResource(R.string.cache_maat)
@@ -94,21 +95,29 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
-    // keuzelijst (album/persoon) dicht: focus terug op die regel (anders pakt Android de lade)
-    val kiesRegel = remember { FocusRequester() }
+    // keuzelijst (albums/personen) dicht: focus terug op die regel (anders pakt Android de lade)
+    val albumRegel = remember { FocusRequester() }
+    val persoonRegel = remember { FocusRequester() }
+    var laatsteKiezer by remember { mutableStateOf<FocusRequester?>(null) }
     val kiezerOpen = albumKiezer || persoonKiezer
     var kiezerWasOpen by remember { mutableStateOf(false) }
-    LaunchedEffect(kiezerOpen) { if (kiezerWasOpen && !kiezerOpen) { delay(16); runCatching { kiesRegel.requestFocus() } }; kiezerWasOpen = kiezerOpen }
+    LaunchedEffect(kiezerOpen) {
+        if (kiezerOpen) laatsteKiezer = if (albumKiezer) albumRegel else persoonRegel
+        if (kiezerWasOpen && !kiezerOpen) { delay(16); runCatching { laatsteKiezer?.requestFocus() } }
+        kiezerWasOpen = kiezerOpen
+    }
     LaunchedEffect(Unit) {
         delay(30)
         // na een taalwissel (recreate) staat de lijst nog op dezelfde plek: focus terug op de regel Taal, anders de eerste regel
         if (Taal.focusTaal) { Taal.focusTaal = false; repeat(5) { if (runCatching { taalRegel.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) } }
         // via het tandwieltje bij de screensaver (systeeminstellingen): meteen naar die groep
-        if (Toetsen.naarScreensaver) { Toetsen.naarScreensaver = false; if (SCREENSAVER_AAN) { lijst.scrollToItem(DREAM_ITEM); delay(50); if (runCatching { dreamRegel.requestFocus() }.isSuccess) return@LaunchedEffect } }
+        if (Toetsen.naarScreensaver) { Toetsen.naarScreensaver = false; if (SCREENSAVER_AAN) { lijst.scrollToItem(dreamItem(Instellingen.alleInstellingen)); delay(50); if (runCatching { dreamRegel.requestFocus() }.isSuccess) return@LaunchedEffect } }
         runCatching { eerste.requestFocus() }
     }
     LaunchedEffect(bevestig) { if (bevestig) { delay(6000); bevestig = false } }
     val uitAan = listOf(stringResource(R.string.uit), stringResource(R.string.aan))
+    // basis = de instellingen die de meeste mensen zoeken; "alle" toont ook de rest (per apparaat onthouden)
+    val alles = Instellingen.alleInstellingen
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -117,19 +126,24 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         item { SchermKop(stringResource(R.string.instellingen), stringResource(R.string.instellingen_sub)) }
+        item {
+            Keuzes(stringResource(R.string.instellingen_tonen), stringResource(if (alles) R.string.instellingen_alle_uitleg else R.string.instellingen_basis_uitleg),
+                listOf(stringResource(R.string.instellingen_basis), stringResource(R.string.instellingen_alle)), if (alles) 1 else 0, Modifier.focusRequester(eerste)) { Instellingen.alleInstellingen = it == 1 }
+        }
 
+        // aantallen regels per modus staan ook in dreamItem()
         groep(R.string.groep_diashow)
         item {
             Keuzes(stringResource(R.string.tijd_per_foto), stringResource(R.string.tijd_per_foto_uitleg), Instellingen.DIA_TIJDEN.map { stringResource(R.string.seconden, it) },
-                Instellingen.DIA_TIJDEN.indexOf(Instellingen.diaSeconden).coerceAtLeast(0), Modifier.focusRequester(eerste)) { Instellingen.diaSeconden = Instellingen.DIA_TIJDEN[it] }
+                Instellingen.DIA_TIJDEN.indexOf(Instellingen.diaSeconden).coerceAtLeast(0)) { Instellingen.diaSeconden = Instellingen.DIA_TIJDEN[it] }
         }
-        schakel(R.string.ken_burns, R.string.ken_burns_uitleg, uitAan, Instellingen.kenBurns) { Instellingen.kenBurns = it }
+        if (alles) schakel(R.string.ken_burns, R.string.ken_burns_uitleg, uitAan, Instellingen.kenBurns) { Instellingen.kenBurns = it }
         item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.dia_volgorde_uitleg), listOf(stringResource(R.string.op_datum), stringResource(R.string.willekeurig)), if (Instellingen.diaWillekeurig) 1 else 0) { Instellingen.diaWillekeurig = it == 1 } }
         item { Keuzes(stringResource(R.string.videos), stringResource(R.string.dia_videos_uitleg), listOf(stringResource(R.string.afspelen), stringResource(R.string.overslaan)), if (Instellingen.diaVideos) 0 else 1) { Instellingen.diaVideos = it == 0 } }
-        item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
-        item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
+        if (alles) item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
+        if (alles) item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
 
-        // ---- Screensaver (item-index DREAM_ITEM = de groepskop; de volgorde hierboven niet veranderen zonder die aan te passen) ----
+        // ---- Screensaver (item-index dreamItem() = de groepskop; de volgorde hierboven niet veranderen zonder die aan te passen) ----
         if (SCREENSAVER_AAN) {
         groep(R.string.groep_screensaver)
         item {
@@ -143,17 +157,28 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Actie(stringResource(R.string.dream_instellen), stringResource(R.string.dream_instellen_uitleg)) { hulp = true } }
         item { Actie(stringResource(R.string.dream_voorbeeld), stringResource(R.string.dream_voorbeeld_uitleg)) { runCatching { ctx.startActivity(android.content.Intent(ctx, VoorbeeldActivity::class.java)) } } }
         item { Keuzes(stringResource(R.string.dream_bron), stringResource(R.string.dream_bron_uitleg), DreamBron.entries.map { stringResource(it.label) }, Instellingen.dreamBron.ordinal) { Instellingen.dreamBron = DreamBron.entries[it] } }
-        if (Instellingen.dreamBron == DreamBron.ALBUM) item { Actie(stringResource(R.string.dream_album), Instellingen.dreamAlbumNaam.ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(kiesRegel)) { albumKiezer = true } }
-        if (Instellingen.dreamBron == DreamBron.PERSOON) item { Actie(stringResource(R.string.dream_persoon), Instellingen.dreamPersoonNaam.ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(kiesRegel)) { persoonKiezer = true } }
+        val bron = Instellingen.dreamBron
+        if (bron == DreamBron.ALBUM || bron == DreamBron.COMBI) item { Actie(stringResource(R.string.dream_albums), Instellingen.dreamAlbumNamen.joinToString(", ").ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(albumRegel)) { albumKiezer = true } }
+        if (bron == DreamBron.PERSOON || bron == DreamBron.COMBI) item { Actie(stringResource(R.string.dream_personen), Instellingen.dreamPersoonNamen.joinToString(", ").ifBlank { stringResource(R.string.dream_kies) }, Modifier.focusRequester(persoonRegel)) { persoonKiezer = true } }
+        if (bron != DreamBron.ALLES && bron != DreamBron.HERINNERINGEN)
+            schakel(R.string.dream_ander_album, R.string.dream_ander_album_uitleg, uitAan, Instellingen.dreamAnderAlbum) { Instellingen.dreamAnderAlbum = it }
+        item {
+            val jaren = Instellingen.DREAM_JAREN
+            Keuzes(stringResource(R.string.dream_vanaf), stringResource(R.string.dream_vanaf_uitleg), jaren.map { if (it == 0) stringResource(R.string.alle_jaren) else it.toString() },
+                jaren.indexOf(Instellingen.dreamVanaf).coerceAtLeast(0)) { Instellingen.dreamVanaf = jaren[it] }
+        }
+        if (bron != DreamBron.HERINNERINGEN) item {
+            Keuzes(stringResource(R.string.volgorde), stringResource(R.string.dream_volgorde_uitleg), DreamVolgorde.entries.map { stringResource(it.label) }, Instellingen.dreamVolgorde.ordinal) { Instellingen.dreamVolgorde = DreamVolgorde.entries[it] }
+        }
         item {
             val labels = Instellingen.DREAM_TIJDEN.map { if (it >= 60) stringResource(R.string.minuten, it / 60) else stringResource(R.string.seconden, it) }
             Keuzes(stringResource(R.string.tijd_per_foto), stringResource(R.string.dream_tijd_uitleg), labels, Instellingen.DREAM_TIJDEN.indexOf(Instellingen.dreamSeconden).coerceAtLeast(0)) { Instellingen.dreamSeconden = Instellingen.DREAM_TIJDEN[it] }
         }
         schakel(R.string.dream_klok, R.string.dream_klok_uitleg, uitAan, Instellingen.dreamKlok) { Instellingen.dreamKlok = it }
-        schakel(R.string.landkaart, R.string.dream_kaart_uitleg, uitAan, Instellingen.dreamKaart) { Instellingen.dreamKaart = it }
-        schakel(R.string.ken_burns, R.string.dream_ken_burns_uitleg, uitAan, Instellingen.dreamKenBurns) { Instellingen.dreamKenBurns = it }
-        schakel(R.string.dream_info, R.string.dream_info_uitleg, uitAan, Instellingen.dreamInfo) { Instellingen.dreamInfo = it }
-        schakel(R.string.dream_ring, R.string.dream_ring_uitleg, uitAan, Instellingen.dreamRing) { Instellingen.dreamRing = it }
+        item { Keuzes(stringResource(R.string.landkaart), stringResource(R.string.dream_kaart_uitleg), KaartMaat.entries.map { stringResource(it.label) }, Instellingen.dreamKaart.ordinal) { Instellingen.dreamKaart = KaartMaat.entries[it] } }
+        if (alles) schakel(R.string.ken_burns, R.string.dream_ken_burns_uitleg, uitAan, Instellingen.dreamKenBurns) { Instellingen.dreamKenBurns = it }
+        if (alles) schakel(R.string.dream_info, R.string.dream_info_uitleg, uitAan, Instellingen.dreamInfo) { Instellingen.dreamInfo = it }
+        if (alles) schakel(R.string.dream_ring, R.string.dream_ring_uitleg, uitAan, Instellingen.dreamRing) { Instellingen.dreamRing = it }
         }
 
         groep(R.string.groep_bekijken)
@@ -163,31 +188,31 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             val labels = Instellingen.BALK_TIJDEN.map { if (it == 0) altijd else stringResource(R.string.seconden_s, (it / 1000.0).let { s -> if (s % 1 == 0.0) "%.0f".format(Taal.locale, s) else "%.1f".format(Taal.locale, s) }) }
             Keuzes(stringResource(R.string.datum_plaats), stringResource(R.string.datum_plaats_uitleg), labels, Instellingen.BALK_TIJDEN.indexOf(Instellingen.balkMs).coerceAtLeast(0)) { Instellingen.balkMs = Instellingen.BALK_TIJDEN[it] }
         }
-        item { Keuzes(stringResource(R.string.teller), stringResource(R.string.teller_uitleg, Taal.getal(12345)), uitAan, if (Instellingen.teller) 1 else 0) { Instellingen.teller = it == 1 } }
-        schakel(R.string.album_naam, R.string.album_naam_uitleg, uitAan, Instellingen.albumNaam) { Instellingen.albumNaam = it }
-        schakel(R.string.wazig, R.string.wazig_uitleg, uitAan, Instellingen.wazig) { Instellingen.wazig = it }
+        if (alles) item { Keuzes(stringResource(R.string.teller), stringResource(R.string.teller_uitleg, Taal.getal(12345)), uitAan, if (Instellingen.teller) 1 else 0) { Instellingen.teller = it == 1 } }
+        if (alles) schakel(R.string.album_naam, R.string.album_naam_uitleg, uitAan, Instellingen.albumNaam) { Instellingen.albumNaam = it }
+        if (alles) schakel(R.string.wazig, R.string.wazig_uitleg, uitAan, Instellingen.wazig) { Instellingen.wazig = it }
 
         groep(R.string.groep_tijdlijn)
         item { Keuzes(stringResource(R.string.grootte), stringResource(R.string.grootte_uitleg), RijMaat.entries.map { stringResource(it.label) }, Instellingen.rijMaat.ordinal) { Instellingen.rijMaat = RijMaat.entries[it] } }
-        item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.tijdlijn_volgorde_uitleg), listOf(stringResource(R.string.nieuwste_eerst), stringResource(R.string.oudste_eerst)), if (Instellingen.nieuwsteEerst) 0 else 1) { Instellingen.nieuwsteEerst = it == 0 } }
-        schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
-        schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
+        if (alles) item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.tijdlijn_volgorde_uitleg), listOf(stringResource(R.string.nieuwste_eerst), stringResource(R.string.oudste_eerst)), if (Instellingen.nieuwsteEerst) 0 else 1) { Instellingen.nieuwsteEerst = it == 0 } }
+        if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
+        if (alles) schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
         item {
             val keuzes = listOf(Sectie.FOTOS, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },
                 keuzes.indexOf(Instellingen.start).coerceAtLeast(0)) { Instellingen.start = keuzes[it] }
         }
-        item {
+        if (alles) item {
             val voorbeeld = stringResource(R.string.groet_met_naam, stringResource(R.string.groet_middag), ik?.naam?.substringBefore(' ') ?: "…")
             Keuzes(stringResource(R.string.begroeting), stringResource(R.string.begroeting_uitleg, voorbeeld), Groet.entries.map { stringResource(it.label) }, Instellingen.groet.ordinal) { Instellingen.groet = Groet.entries[it] }
         }
-        if (Instellingen.groet == Groet.EIGEN) item {
+        if (alles && Instellingen.groet == Groet.EIGEN) item {
             Actie(stringResource(R.string.eigen_tekst), Instellingen.groetTekst.ifBlank { stringResource(R.string.nog_niets) }) { groetInvoer = true }
         }
 
         groep(R.string.groep_kaart)
-        item { Keuzes(stringResource(R.string.startweergave), stringResource(R.string.startweergave_uitleg), KaartStart.entries.map { stringResource(it.label) }, Instellingen.kaartStart.ordinal) { Instellingen.kaartStart = KaartStart.entries[it] } }
-        item { Keuzes(stringResource(R.string.clusterniveau), stringResource(R.string.cluster_uitleg), ClusterNiveau.entries.map { stringResource(it.label) }, Instellingen.cluster.ordinal) { Instellingen.cluster = ClusterNiveau.entries[it] } }
+        if (alles) item { Keuzes(stringResource(R.string.startweergave), stringResource(R.string.startweergave_uitleg), KaartStart.entries.map { stringResource(it.label) }, Instellingen.kaartStart.ordinal) { Instellingen.kaartStart = KaartStart.entries[it] } }
+        if (alles) item { Keuzes(stringResource(R.string.clusterniveau), stringResource(R.string.cluster_uitleg), ClusterNiveau.entries.map { stringResource(it.label) }, Instellingen.cluster.ordinal) { Instellingen.cluster = ClusterNiveau.entries[it] } }
         item { Keuzes(stringResource(R.string.kaartstijl), stringResource(R.string.kaartstijl_uitleg), KaartStijl.entries.map { stringResource(it.label) }, Instellingen.kaartStijl.ordinal) { Instellingen.kaartStijl = KaartStijl.entries[it] } }
 
         groep(R.string.groep_uiterlijk)
@@ -201,24 +226,26 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item {
             Keuzes(stringResource(R.string.accentkleur), stringResource(R.string.accent_uitleg), Accent.entries.map { stringResource(it.label) }, Instellingen.accent.ordinal, kleur = Instellingen.accent.primair) { Instellingen.accent = Accent.entries[it] }
         }
-        item {
+        if (alles) item {
             val u = Instellingen.uiterlijk
             Keuzes(stringResource(R.string.naam_icoon), stringResource(R.string.naam_icoon_uitleg, stringResource(u.uitleg)), Uiterlijk.entries.map { stringResource(it.label) }, u.ordinal) {
                 val nieuw = Uiterlijk.entries[it]; Instellingen.uiterlijk = nieuw; nieuw.pasToe(ctx)
             }
         }
 
+        if (alles) {
         groep(R.string.groep_opslag)
         item { Actie(stringResource(R.string.cache_legen), cache ?: "…") {
             val l = SingletonImageLoader.get(ctx)
             l.memoryCache?.clear(); ThumbHash.leeg()
             Thread { runCatching { l.diskCache?.clear() }; cacheRonde++ }.start()
         } }
+        }
 
         groep(R.string.groep_account)
         item { Info(stringResource(R.string.immich_server), Immich.server.ifBlank { "–" }) }
         item { Info(stringResource(R.string.ingelogd_als), ik?.let { "${it.naam}  ·  ${it.email}" } ?: "…") }
-        item {
+        if (alles) item {
             val mist = Rechten.ontbreekt
             val stand = when {
                 mist == null -> stringResource(R.string.rechten_bezig)
@@ -235,28 +262,43 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         }
 
         groep(R.string.groep_over)
+        item {
+            val n = Update.nieuw
+            val uitleg = when {
+                n != null -> stringResource(R.string.update_beschikbaar, n.versie)
+                controleren -> stringResource(R.string.update_bezig)
+                Update.gecontroleerd -> stringResource(R.string.update_actueel)
+                else -> stringResource(R.string.update_controleer)
+            }
+            Actie(stringResource(R.string.updates), uitleg) {
+                if (n != null) Update.open = true
+                else if (!controleren) scope.launch { controleren = true; Update.controleer(ctx, melden = false); controleren = false; if (Update.nieuw != null) Update.open = true }
+            }
+        }
+        if (alles) schakel(R.string.update_auto, R.string.update_auto_uitleg, uitAan, Instellingen.updateCheck) { Instellingen.updateCheck = it }
+        item { Actie(stringResource(R.string.nieuw_regel), stringResource(R.string.nieuw_regel_uitleg)) { Update.nieuwsOpen = true } }
         item { Actie(stringResource(R.string.toetsen), stringResource(R.string.toetsen_uitleg)) { toetsen() } }
         item { Info(stringResource(R.string.app_regel, stringResource(Instellingen.uiterlijk.label)), stringResource(R.string.versie, versie)) }
         item { Info(stringResource(R.string.immich_server), immichVersie?.let { stringResource(R.string.versie, it) } ?: "…") }
-        item { Info(stringResource(R.string.kaart), stringResource(R.string.kaart_bron, SAT_BRON)) }
+        if (alles) item { Info(stringResource(R.string.kaart), stringResource(R.string.kaart_bron, SAT_BRON)) }
         item { Text(stringResource(R.string.onofficieel_lang), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) }
-        item { Actie(stringResource(R.string.diagnose), stringResource(R.string.diagnose_uitleg)) { diagnose = true } }
+        if (alles) item { Actie(stringResource(R.string.diagnose), stringResource(R.string.diagnose_uitleg)) { diagnose = true } }
     }
     if (hulp) ScreensaverHulp { hulp = false; dreamRonde++ }
     if (diagnose) DiagnoseLaag { diagnose = false }
-    if (albumKiezer) KiesLijst(stringResource(R.string.dream_album), albumKeuzes(), Instellingen.dreamAlbum, sluit = { albumKiezer = false }) { id, naam ->
-        Instellingen.dreamAlbum = id; Instellingen.dreamAlbumNaam = naam; albumKiezer = false
+    if (albumKiezer) KiesLijst(stringResource(R.string.dream_albums), albumKeuzes(), Instellingen.dreamAlbum, sluit = { albumKiezer = false }, meer = true) { id, naam ->
+        Instellingen.wisselDreamAlbum(id, naam)
     }
-    if (persoonKiezer) KiesLijst(stringResource(R.string.dream_persoon), persoonKeuzes(), Instellingen.dreamPersoon, sluit = { persoonKiezer = false }) { id, naam ->
-        Instellingen.dreamPersoon = id; Instellingen.dreamPersoonNaam = naam; persoonKiezer = false
+    if (persoonKiezer) KiesLijst(stringResource(R.string.dream_personen), persoonKeuzes(), Instellingen.dreamPersoon, sluit = { persoonKiezer = false }, meer = true) { id, naam ->
+        Instellingen.wisselDreamPersoon(id, naam)
     }
     if (groetInvoer) TekstInvoer(stringResource(R.string.begroeting), Instellingen.groetTekst, actie = stringResource(R.string.actie_klaar), sluit = { groetInvoer = false }) {
         Instellingen.groetTekst = it; groetInvoer = false
     }
 }
 
-/** Item-index van de groepskop "Screensaver" in de lijst: kop (1) + groep Diashow (1 + 6 regels). */
-private const val DREAM_ITEM = 8
+/** Item-index van de groepskop "Screensaver" in de lijst: kop + regel Basis/Alle + groep Diashow (1 + 3 of 6 regels). */
+private fun dreamItem(alles: Boolean) = 3 + if (alles) 6 else 3
 /** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
 const val SCREENSAVER_AAN = true
 
@@ -331,6 +373,7 @@ private fun Regel(titel: String, uitleg: String, modifier: Modifier = Modifier, 
 /** Overzicht van alle sneltoetsen per scherm (INFO-toets, of via Instellingen → Toetsen). Elke toets sluit het. */
 @Composable
 fun ToetsenOverzicht(sluit: () -> Unit) {
+    Lagen.Open()
     val fr = remember { FocusRequester() }
     BackHandler { sluit() }
     LaunchedEffect(Unit) { delay(30); runCatching { fr.requestFocus() } }

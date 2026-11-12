@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- bijwerken vanuit de app (Update.kt): de gebruiker bevestigt elke installatie zelf -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Screensaver van het systeem op deze app zetten (Settings.Secure.screensaver_components). Een gewone app krijgt
          deze permissie niet vanzelf: eenmalig via adb `pm grant` (zie ScreensaverInstellen.kt); zonder blijft de app
          gewoon werken en toont hij de uitleg. -->
@@ -93,6 +95,9 @@
             android:targetActivity=".MainActivity"
             android:exported="true"
             android:label="@string/dream_naam" />
+
+        <!-- uitslag van een update-installatie (PackageInstaller) -->
+        <receiver android:name=".UpdateOntvanger" android:exported="false" />
 
         <!-- Sleutel + server zetten via adb zonder de app te openen (zie SleutelOntvanger). DUMP heeft alleen de shell/het
              systeem, geen gewone app. -->

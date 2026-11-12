@@ -203,6 +203,7 @@ object ZelfAdb {
 /** Instellingen → Screensaver → Instellen: toestand, knoppen en de stap-voor-stap-uitleg. Terug sluit. */
 @Composable
 fun ScreensaverHulp(sluit: () -> Unit) {
+    Lagen.Open()
     val ctx = LocalContext.current
     BackHandler { sluit() }
     var ronde by remember { mutableIntStateOf(0) }
@@ -314,20 +315,25 @@ class KiesItem(val id: String, val naam: String, val sub: String?, val beeld: St
  * Keuzelijst (album of persoon voor de screensaver), bruikbaar met honderden items: bovenaan een zoekknop (filtert
  * tijdens het typen, accenten tellen niet), dan de huidige keuze, dan de rest (albums: laatst bijgewerkt eerst; personen:
  * wie het vaakst voorkomt eerst). De focus start op de huidige keuze. Terug sluit zonder keuze.
+ * [meer] = meerdere kiezen: [gekozen] is dan een kommalijst, OK zet een regel aan/uit (meteen bewaard) en Terug sluit;
+ * de volgorde blijft die van het openen, zodat een regel niet wegspringt als je hem aan- of uitzet.
  */
 @Composable
-fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () -> Unit, kies: (String, String) -> Unit) {
+fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () -> Unit, meer: Boolean = false, kies: (String, String) -> Unit) {
+    Lagen.Open()
+    val aan = remember(gekozen) { gekozen.split(',').filter { it.isNotBlank() }.toSet() }
+    val bijOpenen = remember { aan }
     var zoek by remember { mutableStateOf("") }
     var zoekOpen by remember { mutableStateOf(false) }
     BackHandler(enabled = !zoekOpen) { sluit() }
     val fr = remember { FocusRequester() }
     val zoekKnop = remember { FocusRequester() }
     val lijst = androidx.compose.foundation.lazy.rememberLazyListState()
-    val zichtbaar = remember(items, zoek, gekozen) {
+    val zichtbaar = remember(items, zoek) {
         val l = items.orEmpty()
         val z = zonderAccenten(zoek.trim())
         if (z.isNotEmpty()) l.filter { zonderAccenten(it.naam).contains(z, ignoreCase = true) }
-        else l.filter { it.id == gekozen } + l.filter { it.id != gekozen }
+        else l.filter { it.id in bijOpenen } + l.filter { it.id !in bijOpenen }
     }
     // focus op de huidige keuze (staat bovenaan) of de eerste regel; na zoeken op de eerste treffer
     LaunchedEffect(items, zoek) {
@@ -342,7 +348,7 @@ fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(titel, style = MaterialTheme.typography.displaySmall)
-                    if (items != null) Text(Taal.getal(zichtbaar.size) + if (zoek.isNotBlank()) "  ·  “$zoek”" else "", style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
+                    if (items != null) Text(Taal.getal(zichtbaar.size) + (if (zoek.isNotBlank()) "  ·  “$zoek”" else "") + (if (meer) "  ·  " + stringResource(R.string.dream_albums_hint, aan.size) else ""), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
                 }
                 if (!items.isNullOrEmpty()) Keuze(
                     selected = zoek.isNotBlank(), onClick = { zoekOpen = true }, modifier = Modifier.focusRequester(zoekKnop),
@@ -356,7 +362,7 @@ fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () 
                 zichtbaar.isEmpty() -> Text(stringResource(R.string.niets_gevonden), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
                 else -> LazyColumn(state = lijst, verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 6.dp)) {
                     items(zichtbaar, key = { it.id }) { it2 ->
-                        KiesRegel(it2, it2.id == gekozen, if (it2 === zichtbaar.first()) Modifier.focusRequester(fr) else Modifier) { kies(it2.id, it2.naam) }
+                        KiesRegel(it2, it2.id in aan, if (it2 === zichtbaar.first()) Modifier.focusRequester(fr) else Modifier) { kies(it2.id, it2.naam) }
                     }
                 }
             }

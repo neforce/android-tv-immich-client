@@ -143,6 +143,11 @@
 
     <string name="instellingen">Einstellungen</string>
     <string name="instellingen_sub">"◀ ▶ oder OK: Wert wählen   ·   Zurück lang drücken: Menü   ·   INFO: Tasten"</string>
+    <string name="instellingen_tonen">Einstellungen anzeigen</string>
+    <string name="instellingen_basis">Einfach</string>
+    <string name="instellingen_alle">Alle</string>
+    <string name="instellingen_basis_uitleg">Nur die meistgenutzten Einstellungen. Wähle Alle für den Rest.</string>
+    <string name="instellingen_alle_uitleg">Alles, auch die erweiterten Einstellungen</string>
     <string name="uit">Aus</string>
     <string name="aan">An</string>
     <string name="groep_diashow">Diashow</string>
@@ -376,9 +381,19 @@
     <string name="dream_voorbeeld">Vorschau</string>
     <string name="dream_voorbeeld_uitleg">Den Bildschirmschoner jetzt anzeigen; jede Taste schließt ihn</string>
     <string name="dream_bron">Fotos</string>
-    <string name="dream_bron_uitleg">Welche Fotos der Bildschirmschoner zeigt (immer in zufälliger Reihenfolge)</string>
+    <string name="dream_bron_uitleg">Welche Fotos der Bildschirmschoner zeigt</string>
     <string name="dream_alle_fotos">Alle Fotos</string>
     <string name="dream_album">Album</string>
+    <string name="dream_personen">Personen</string>
+    <string name="dream_combi">Alben + Personen</string>
+    <string name="dream_vanaf">Ab</string>
+    <string name="dream_vanaf_uitleg">Nur Fotos aus diesem Jahr oder später</string>
+    <string name="alle_jaren">Alle Jahre</string>
+    <string name="dream_volgorde_uitleg">Zufällig oder nach Datum (macht dort weiter, wo er war)</string>
+    <string name="dream_albums">Alben</string>
+    <string name="dream_albums_hint">"%1$d ausgewählt  ·  OK = an/aus"</string>
+    <string name="dream_ander_album">Anderes Album zeigen</string>
+    <string name="dream_ander_album_uitleg">Ist ein Foto auch in einem anderen Album, dessen Namen zeigen (z. B. „Geburtstag“ statt „Bildschirmschoner“)</string>
     <string name="dream_herinneringen">Erinnerungen von heute</string>
     <string name="dream_persoon">Person</string>
     <string name="dream_kies">Noch nicht gewählt – OK drücken</string>
@@ -524,4 +539,30 @@
     <string name="recht_person_read">Personen</string>
     <string name="recht_map_read">Weltkarte</string>
     <string name="recht_folder_read">Ordner</string>
+    <string name="update_titel">Version %1$s ist verfügbar</string>
+    <string name="update_sub">Du hast Version %1$s</string>
+    <string name="update_downloaden">Wird geladen… %1$d%%</string>
+    <string name="update_installeren">Wird installiert…</string>
+    <string name="update_toestemming">Erlaube dieser App zuerst, Updates zu installieren (unbekannte Quellen). Wähle dann erneut Aktualisieren.</string>
+    <string name="update_toestemming_knop">Einstellung öffnen</string>
+    <string name="update_fout">Aktualisierung fehlgeschlagen: %1$s</string>
+    <string name="update_nu">Jetzt aktualisieren</string>
+    <string name="update_later">Später</string>
+    <string name="nieuw_titel">Neu in %1$s</string>
+    <string name="updates">Updates</string>
+    <string name="update_beschikbaar">Version %1$s ist verfügbar. OK zum Aktualisieren</string>
+    <string name="update_bezig">Wird geprüft…</string>
+    <string name="update_actueel">Du hast die neueste Version. OK zum erneuten Prüfen</string>
+    <string name="update_controleer">OK, um nach einer neuen Version zu suchen</string>
+    <string name="update_auto">Nach Updates suchen</string>
+    <string name="update_auto_uitleg">Beim Start auf GitHub nach einer neuen Version suchen</string>
+    <string name="nieuw_regel">Was ist neu</string>
+    <string name="nieuw_regel_uitleg">Änderungen in dieser Version</string>
+    <string-array name="wat_nieuw">
+        <item>Landkarte im Bildschirmschoner: aus, klein oder groß</item>
+        <item>Bildschirmschoner: mehrere Alben wählen und den eigenen Albumnamen des Fotos zeigen (z. B. „Geburtstag“ statt „Bildschirmschoner“)</item>
+        <item>Bildschirmschoner: mehrere Personen oder Alben und Personen zusammen, ab einem bestimmten Jahr, zufällig oder nach Datum</item>
+        <item>Einstellungen: Einfach oder Alle, damit die Liste kurz bleibt</item>
+        <item>Updates: Die App meldet eine neue Version und kann sich selbst aktualisieren</item>
+    </string-array>
 </resources>

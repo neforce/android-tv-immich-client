@@ -205,6 +205,8 @@ class MainActivity : ComponentActivity() {
             scrolBalkUit = intent.getBooleanExtra("geen_balk", false)
             videoZonderPlaceholder = intent.getBooleanExtra("video_zonder_placeholder", false)
             kaartCache = intent.getBooleanExtra("kaart_cache", kaartCache); kaartPrefetch = intent.getIntExtra("kaart_prefetch", -1)
+            // `--es update_test 2.0`: doen alsof die versie geïnstalleerd is (updatecheck/-venster testen)
+            Update.testVersie = intent.getStringExtra("update_test")
         }
         setContent { FotosThema { FotosApp(finish = ::finish, herstart = ::recreate, testIndex = testIndex, startSectie = startSectie, instelTest = instelTest, taalTest = taalTest) } }
     }
@@ -274,6 +276,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     val appCtx = androidx.compose.ui.platform.LocalContext.current.applicationContext
     // rechten van de sleutel controleren; een nieuw ontbrekend recht één keer melden (overzicht met Opnieuw koppelen)
     androidx.compose.runtime.LaunchedEffect(Immich.stand) { kotlinx.coroutines.delay(1500); Rechten.controleer(); Rechten.meldNieuw(appCtx) }
+    // na een update één keer "Wat is er nieuw"; daarna (als dat aanstaat) kijken of er een nieuwere release is
+    androidx.compose.runtime.LaunchedEffect(Unit) { Update.bijStart(appCtx); kotlinx.coroutines.delay(4000); if (Instellingen.updateCheck) Update.controleer(appCtx, melden = true) }
     val wortels = remember { HashMap<Sectie, Scherm>() }
     var sectie by remember { mutableStateOf(startSectie) }
     val stapel = remember { mutableStateListOf<Scherm>() }
@@ -332,6 +336,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     }
 
     val ladeFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    /** inhoud (rechts van de lade): na het sluiten van een popup de focus hierheen, anders pakt Android de lade */
+    val inhoudFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    val inhoudHeeftFocus = remember { androidx.compose.runtime.mutableStateOf(false) }
     // menu openen = focus op het lade-item van de huidige sectie (de lade van tv-material opent op focus)
     fun openLade() { toetsen = false; runCatching { ladeFocus.requestFocus() }.onFailure { Log.w("Fotos", "lade", it) } }
     val langeTerug = Toetsen.langeTerug
@@ -372,14 +379,19 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         // Schermwissel (ook viewer open/dicht): even heeft niets focus en zou Android die aan het eerste focusbare
         // element geven = de lade (klapt kort open). Daarom is de lade tijdens de wissel niet focusbaar; het nieuwe
         // scherm pakt zijn focus zelf. De eerste compositie met een nieuw scherm telt al mee (`nieuw`), vóór de effect.
-        val wisselSleutel = scherm to (kijker != null)
+        // popups (nieuw in deze versie, update, rechten) tellen ook als wissel: sluiten ze, dan gaat de focus terug naar de inhoud
+        val popup = Update.nieuwsOpen || Update.open || Rechten.open || Lagen.open > 0
+        val wisselSleutel = Triple(scherm, kijker != null, popup)
         val laatsteSleutel = remember { androidx.compose.runtime.mutableStateOf(wisselSleutel) }
         val wisselt = remember { androidx.compose.runtime.mutableStateOf(false) }
         val ladeDicht = wisselSleutel != laatsteSleutel.value || wisselt.value
         androidx.compose.runtime.LaunchedEffect(wisselSleutel) {
             if (wisselSleutel == laatsteSleutel.value) return@LaunchedEffect
             wisselt.value = true
+            val popupDicht = laatsteSleutel.value.third && !popup && laatsteSleutel.value.first == scherm
             laatsteSleutel.value = wisselSleutel
+            // de laag zelf kan de focus al teruggezet hebben (bijv. op de regel die hem opende); alleen als niets in de inhoud focus heeft
+            if (popupDicht) { kotlinx.coroutines.delay(48); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
             kotlinx.coroutines.delay(800)
             wisselt.value = false
         }
@@ -427,6 +439,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
             Box(
                 Modifier.fillMaxSize().padding(start = 80.dp)
+                    .focusRequester(inhoudFocus)
+                    .onFocusChanged { inhoudHeeftFocus.value = it.hasFocus }
                     .focusProperties {
                         exit = { richting ->
                             if (richting == androidx.compose.ui.focus.FocusDirection.Left && !ladeDicht) ladeFocus
@@ -454,6 +468,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
         if (toetsen && kijker == null) ToetsenOverzicht { toetsen = false }
         if (Rechten.open && kijker == null) RechtenScherm(opnieuwKoppelen = { Rechten.open = false; instellen = true }) { Rechten.open = false }
+        if (Update.nieuwsOpen && kijker == null) NieuwsScherm { Update.nieuwsOpen = false }
+        else if (Update.open && kijker == null) UpdateScherm { Update.open = false }
         kijker?.let { (k, raster, naTerug) ->
             Kijker(
                 k,

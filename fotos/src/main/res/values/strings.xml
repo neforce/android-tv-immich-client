@@ -156,6 +156,11 @@
     <!-- Settings -->
     <string name="instellingen">Settings</string>
     <string name="instellingen_sub">"◀ ▶ or OK: choose a value   ·   Hold Back: menu   ·   INFO: keys"</string>
+    <string name="instellingen_tonen">Show settings</string>
+    <string name="instellingen_basis">Basic</string>
+    <string name="instellingen_alle">All</string>
+    <string name="instellingen_basis_uitleg">Only the most used settings. Choose All for the rest.</string>
+    <string name="instellingen_alle_uitleg">Everything, including the advanced settings</string>
     <string name="uit">Off</string>
     <string name="aan">On</string>
     <string name="groep_diashow">Slideshow</string>
@@ -393,9 +398,19 @@
     <string name="dream_voorbeeld">Preview</string>
     <string name="dream_voorbeeld_uitleg">Show the screensaver now; any key closes it</string>
     <string name="dream_bron">Photos</string>
-    <string name="dream_bron_uitleg">Which photos the screensaver shows (always in random order)</string>
+    <string name="dream_bron_uitleg">Which photos the screensaver shows</string>
     <string name="dream_alle_fotos">All photos</string>
     <string name="dream_album">Album</string>
+    <string name="dream_personen">People</string>
+    <string name="dream_combi">Albums + people</string>
+    <string name="dream_vanaf">From</string>
+    <string name="dream_vanaf_uitleg">Only photos taken in or after this year</string>
+    <string name="alle_jaren">All years</string>
+    <string name="dream_volgorde_uitleg">Random, or by date (continues where it left off)</string>
+    <string name="dream_albums">Albums</string>
+    <string name="dream_albums_hint">"%1$d selected  ·  OK = on/off"</string>
+    <string name="dream_ander_album">Show other album</string>
+    <string name="dream_ander_album_uitleg">If a photo is also in another album, show that album\'s name instead (e.g. “Birthday” instead of “Screensaver”)</string>
     <string name="dream_herinneringen">Today\'s memories</string>
     <string name="dream_persoon">Person</string>
     <string name="dream_kies">Not chosen yet – press OK</string>
@@ -541,4 +556,30 @@
     <string name="recht_person_read">People</string>
     <string name="recht_map_read">World map</string>
     <string name="recht_folder_read">Folders</string>
+    <string name="update_titel">Version %1$s is available</string>
+    <string name="update_sub">You have version %1$s</string>
+    <string name="update_downloaden">Downloading… %1$d%%</string>
+    <string name="update_installeren">Installing…</string>
+    <string name="update_toestemming">Allow this app to install updates first (unknown sources). Then choose Update again.</string>
+    <string name="update_toestemming_knop">Open setting</string>
+    <string name="update_fout">Update failed: %1$s</string>
+    <string name="update_nu">Update now</string>
+    <string name="update_later">Later</string>
+    <string name="nieuw_titel">What\'s new in %1$s</string>
+    <string name="updates">Updates</string>
+    <string name="update_beschikbaar">Version %1$s is available. OK to update</string>
+    <string name="update_bezig">Checking…</string>
+    <string name="update_actueel">You have the latest version. OK to check again</string>
+    <string name="update_controleer">OK to check for a new version</string>
+    <string name="update_auto">Check for updates</string>
+    <string name="update_auto_uitleg">Look for a new version on GitHub at startup</string>
+    <string name="nieuw_regel">What\'s new</string>
+    <string name="nieuw_regel_uitleg">Changes in this version</string>
+    <string-array name="wat_nieuw">
+        <item>Screensaver map: off, small or large</item>
+        <item>Screensaver: choose several albums, and show the photo\'s own album name (e.g. “Birthday” instead of “Screensaver”)</item>
+        <item>Screensaver: choose several people, or albums and people together, from a given year, in random order or by date</item>
+        <item>Settings: Basic or All, so the list stays short</item>
+        <item>Updates: the app tells you when a new version is out and can update itself</item>
+    </string-array>
 </resources>
