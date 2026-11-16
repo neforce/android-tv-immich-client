@@ -221,6 +221,10 @@
     <string name="groep_uiterlijk">Apparence</string>
     <string name="taal">Langue</string>
     <string name="taal_uitleg">Langue de l\'appli ; appliquée immédiatement</string>
+    <string name="datumnotatie">Format de date</string>
+    <string name="datumnotatie_uitleg">Ordre du jour et du mois dans toutes les dates (y compris l\'économiseur d\'écran)</string>
+    <string name="kloknotatie">Format de l\'heure</string>
+    <string name="kloknotatie_uitleg">12 ou 24 heures ; automatique suit la langue</string>
     <string name="accentkleur">Couleur d\'accent</string>
     <string name="accent_uitleg">Couleur de la sélection, des boutons et des titres</string>
     <string name="kleur_blauw">Bleu</string>
@@ -566,10 +570,7 @@
     <string name="nieuw_regel">Nouveautés</string>
     <string name="nieuw_regel_uitleg">Changements de cette version</string>
     <string-array name="wat_nieuw">
-        <item>Carte dans l\'écran de veille : désactivée, petite ou grande</item>
-        <item>Écran de veille : choisir plusieurs albums et afficher l\'album propre de la photo (p. ex. « Anniversaire » au lieu de « Écran de veille »)</item>
-        <item>Écran de veille : plusieurs personnes, ou albums et personnes ensemble, à partir d\'une année, au hasard ou par date</item>
-        <item>Réglages : Essentiels ou Tous, pour une liste plus courte</item>
-        <item>Mises à jour : l\'application signale une nouvelle version et peut se mettre à jour</item>
+        <item>Format de date : jour d\'abord ou mois d\'abord (« dim., sept. 3, 2023 »)</item>
+        <item>Format de l\'heure : automatique, 24 heures ou 12 heures</item>
     </string-array>
 </resources>

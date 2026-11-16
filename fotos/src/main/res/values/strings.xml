@@ -228,6 +228,10 @@
     <string name="groep_uiterlijk">Appearance</string>
     <string name="taal">Language</string>
     <string name="taal_uitleg">Language of the app; applies immediately</string>
+    <string name="datumnotatie">Date format</string>
+    <string name="datumnotatie_uitleg">Order of day and month in all dates (also the screensaver)</string>
+    <string name="kloknotatie">Time format</string>
+    <string name="kloknotatie_uitleg">12 or 24 hours; automatic follows the language</string>
     <string name="accentkleur">Accent color</string>
     <string name="accent_uitleg">Color of the focus, buttons and titles</string>
     <string name="kleur_blauw">Blue</string>
@@ -576,10 +580,7 @@
     <string name="nieuw_regel">What\'s new</string>
     <string name="nieuw_regel_uitleg">Changes in this version</string>
     <string-array name="wat_nieuw">
-        <item>Screensaver map: off, small or large</item>
-        <item>Screensaver: choose several albums, and show the photo\'s own album name (e.g. “Birthday” instead of “Screensaver”)</item>
-        <item>Screensaver: choose several people, or albums and people together, from a given year, in random order or by date</item>
-        <item>Settings: Basic or All, so the list stays short</item>
-        <item>Updates: the app tells you when a new version is out and can update itself</item>
+        <item>Date format: day first or month first (“Sun, Sep 3, 2023”)</item>
+        <item>Time format: automatic, 24 hours or 12 hours</item>
     </string-array>
 </resources>

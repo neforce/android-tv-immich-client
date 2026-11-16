@@ -127,6 +127,8 @@ The first line, **Show settings**, switches between **Basic** (the settings most
 | | Clustering | fine / normal / coarse |
 | | Map style | dark / light / satellite |
 | Appearance | Language | English, Nederlands, Deutsch, Français, Español |
+| | Date format | day first ("Sun 3 Sep 2023") / month first ("Sun, Sep 3, 2023") |
+| | Time format | automatic (follows the language) / 24 hours / 12 hours |
 | | Accent colour | blue / green / orange / pink / purple / grey |
 | | App name and icon | four variants for the launcher |
 | Storage | Clear image cache | |

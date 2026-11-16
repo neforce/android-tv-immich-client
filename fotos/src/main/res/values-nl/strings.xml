@@ -215,6 +215,10 @@
     <string name="groep_uiterlijk">Uiterlijk</string>
     <string name="taal">Taal</string>
     <string name="taal_uitleg">Taal van de app; geldt meteen</string>
+    <string name="datumnotatie">Datumnotatie</string>
+    <string name="datumnotatie_uitleg">Volgorde van dag en maand in alle datums (ook de screensaver)</string>
+    <string name="kloknotatie">Tijdnotatie</string>
+    <string name="kloknotatie_uitleg">12 of 24 uur; automatisch volgt de taal</string>
     <string name="accentkleur">Accentkleur</string>
     <string name="accent_uitleg">Kleur van de focus, knoppen en titels</string>
     <string name="kleur_blauw">Blauw</string>
@@ -559,10 +563,7 @@
     <string name="nieuw_regel">Wat is er nieuw</string>
     <string name="nieuw_regel_uitleg">Wijzigingen in deze versie</string>
     <string-array name="wat_nieuw">
-        <item>Landkaart in de screensaver: uit, klein of groot</item>
-        <item>Screensaver: meerdere albums kiezen, en de eigen albumnaam van de foto tonen (bijv. “Verjaardag” i.p.v. “Screensaver”)</item>
-        <item>Screensaver: meerdere personen, of albums en personen samen, vanaf een bepaald jaar, willekeurig of op datum</item>
-        <item>Instellingen: Basis of Alle, zodat de lijst kort blijft</item>
-        <item>Updates: de app meldt een nieuwe versie en kan zichzelf bijwerken</item>
+        <item>Datumnotatie: dag eerst of maand eerst („zo, sep. 3, 2023”)</item>
+        <item>Tijdnotatie: automatisch, 24 uur of 12 uur</item>
     </string-array>
 </resources>

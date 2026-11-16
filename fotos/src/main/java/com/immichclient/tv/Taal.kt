@@ -41,8 +41,8 @@ object Taal {
         private set
     /** Sectie waarin de activity na een taalwissel (recreate) opnieuw opent, één keer (Instellingen). */
     @Volatile var herstartSectie: Sectie? = null
-    /** Na die herstart de focus op de regel Taal zetten (de lijst staat nog op dezelfde plek, zie InstellingenScherm). */
-    @Volatile var focusTaal = false
+    /** Na die herstart de focus op deze regel zetten ("taal", "datum", "klok"; de lijst staat nog op dezelfde plek, zie InstellingenScherm). */
+    @Volatile var focusRegel: String? = null
     val locale: Locale get() = Locale.forLanguageTag(code)
 
     /** Applicatiecontext in de gekozen taal, voor strings buiten Compose. */
@@ -110,6 +110,40 @@ object Taal {
 
 /** Datum-/tijdnotatie in de gekozen taal; de patronen staan in de strings (per taal), zodat een vertaling ze kan aanpassen. */
 object Formaat {
+    /** volgorde van dag en maand: standaard (zoals de taal: "Sun 3 Sep 2023") of maand eerst ("Sun, Sep 3, 2023"); per apparaat */
+    enum class Datum { STANDAARD, MAAND_DAG }
+    /** klok: zoals de taal, 24 uur of 12 uur (AM/PM); per apparaat */
+    enum class Klok { STANDAARD, H24, H12 }
+    private const val PREFS = "instellingen"
+    var datum = Datum.STANDAARD; private set
+    var klok = Klok.STANDAARD; private set
+
+    /** Keuze bewaren en toepassen; de activity moet daarna `recreate()` doen (net als bij een taalwissel). */
+    fun kies(c: Context, d: Datum = datum, k: Klok = klok) {
+        c.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("datum_notatie", d.name).putString("klok_notatie", k.name).apply()
+        datum = d; klok = k
+        ververs()
+    }
+
+    /** Patronen voor "maand eerst" (Amerikaans), los van de taal. */
+    private fun patroon(id: Int): String = when {
+        datum == Datum.MAAND_DAG && id == R.string.patroon_dag_kort -> "EEE, MMM d"
+        datum == Datum.MAAND_DAG && id == R.string.patroon_dag_jaar -> "EEE, MMM d, yyyy"
+        datum == Datum.MAAND_DAG && id == R.string.patroon_dag_lang -> "EEEE, MMMM d, yyyy"
+        klok == Klok.H24 && id == R.string.patroon_tijd -> "HH:mm"
+        klok == Klok.H12 && id == R.string.patroon_tijd -> "h:mm a"
+        else -> Taal.s(id)
+    }
+
+    /** Voorbeeld van een notatie (voor de keuzes in Instellingen), zonder de huidige keuze te veranderen. */
+    fun voorbeeld(d: Datum? = null, k: Klok? = null): String {
+        val oud = datum to klok
+        d?.let { datum = it }; k?.let { klok = it }
+        val v = if (d != null) LocalDate.of(2023, 9, 3).format(DateTimeFormatter.ofPattern(patroon(R.string.patroon_dag_jaar), Taal.locale)).hoofdletter()
+            else LocalDateTime.of(2023, 9, 3, 15, 30).format(DateTimeFormatter.ofPattern(patroon(R.string.patroon_tijd), Taal.locale))
+        datum = oud.first; klok = oud.second
+        return v
+    }
     lateinit var maandJaar: DateTimeFormatter; private set
     lateinit var maandKort: DateTimeFormatter; private set
     lateinit var dagKort: DateTimeFormatter; private set
@@ -120,7 +154,12 @@ object Formaat {
 
     fun ververs() {
         val l = Taal.locale
-        fun f(id: Int) = DateTimeFormatter.ofPattern(Taal.s(id), l)
+        runCatching {
+            val p = Taal.ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            datum = p.getString("datum_notatie", null)?.let { n -> Datum.entries.firstOrNull { it.name == n } } ?: Datum.STANDAARD
+            klok = p.getString("klok_notatie", null)?.let { n -> Klok.entries.firstOrNull { it.name == n } } ?: Klok.STANDAARD
+        }
+        fun f(id: Int) = DateTimeFormatter.ofPattern(patroon(id), l)
         maandJaar = f(R.string.patroon_maand_jaar); maandKort = f(R.string.patroon_maand_kort)
         dagKort = f(R.string.patroon_dag_kort); dagJaar = f(R.string.patroon_dag_jaar); dagLang = f(R.string.patroon_dag_lang)
         tijd = f(R.string.patroon_tijd)

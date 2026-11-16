@@ -215,6 +215,10 @@
     <string name="groep_uiterlijk">Darstellung</string>
     <string name="taal">Sprache</string>
     <string name="taal_uitleg">Sprache der App; gilt sofort</string>
+    <string name="datumnotatie">Datumsformat</string>
+    <string name="datumnotatie_uitleg">Reihenfolge von Tag und Monat in allen Datumsangaben (auch im Bildschirmschoner)</string>
+    <string name="kloknotatie">Zeitformat</string>
+    <string name="kloknotatie_uitleg">12 oder 24 Stunden; automatisch folgt der Sprache</string>
     <string name="accentkleur">Akzentfarbe</string>
     <string name="accent_uitleg">Farbe von Auswahl, Knöpfen und Titeln</string>
     <string name="kleur_blauw">Blau</string>
@@ -559,10 +563,7 @@
     <string name="nieuw_regel">Was ist neu</string>
     <string name="nieuw_regel_uitleg">Änderungen in dieser Version</string>
     <string-array name="wat_nieuw">
-        <item>Landkarte im Bildschirmschoner: aus, klein oder groß</item>
-        <item>Bildschirmschoner: mehrere Alben wählen und den eigenen Albumnamen des Fotos zeigen (z. B. „Geburtstag“ statt „Bildschirmschoner“)</item>
-        <item>Bildschirmschoner: mehrere Personen oder Alben und Personen zusammen, ab einem bestimmten Jahr, zufällig oder nach Datum</item>
-        <item>Einstellungen: Einfach oder Alle, damit die Liste kurz bleibt</item>
-        <item>Updates: Die App meldet eine neue Version und kann sich selbst aktualisieren</item>
+        <item>Datumsformat: Tag zuerst oder Monat zuerst („So, Sep. 3, 2023“)</item>
+        <item>Zeitformat: automatisch, 24 Stunden oder 12 Stunden</item>
     </string-array>
 </resources>

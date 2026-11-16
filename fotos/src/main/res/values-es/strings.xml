@@ -221,6 +221,10 @@
     <string name="groep_uiterlijk">Apariencia</string>
     <string name="taal">Idioma</string>
     <string name="taal_uitleg">Idioma de la app; se aplica al instante</string>
+    <string name="datumnotatie">Formato de fecha</string>
+    <string name="datumnotatie_uitleg">Orden del día y el mes en todas las fechas (también el salvapantallas)</string>
+    <string name="kloknotatie">Formato de hora</string>
+    <string name="kloknotatie_uitleg">12 o 24 horas; automático sigue el idioma</string>
     <string name="accentkleur">Color de acento</string>
     <string name="accent_uitleg">Color de la selección, los botones y los títulos</string>
     <string name="kleur_blauw">Azul</string>
@@ -566,10 +570,7 @@
     <string name="nieuw_regel">Novedades</string>
     <string name="nieuw_regel_uitleg">Cambios en esta versión</string>
     <string-array name="wat_nieuw">
-        <item>Mapa en el salvapantallas: desactivado, pequeño o grande</item>
-        <item>Salvapantallas: elegir varios álbumes y mostrar el álbum propio de la foto (p. ej. «Cumpleaños» en lugar de «Salvapantallas»)</item>
-        <item>Salvapantallas: varias personas, o álbumes y personas juntos, desde un año concreto, al azar o por fecha</item>
-        <item>Ajustes: Básicos o Todos, para que la lista sea corta</item>
-        <item>Actualizaciones: la app avisa de una nueva versión y puede actualizarse sola</item>
+        <item>Formato de fecha: primero el día o primero el mes («dom, sept 3, 2023»)</item>
+        <item>Formato de hora: automático, 24 horas o 12 horas</item>
     </string-array>
 </resources>

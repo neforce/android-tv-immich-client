@@ -95,6 +95,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
+    val datumRegel = remember { FocusRequester() }
+    val klokRegel = remember { FocusRequester() }
     // keuzelijst (albums/personen) dicht: focus terug op die regel (anders pakt Android de lade)
     val albumRegel = remember { FocusRequester() }
     val persoonRegel = remember { FocusRequester() }
@@ -109,7 +111,11 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     LaunchedEffect(Unit) {
         delay(30)
         // na een taalwissel (recreate) staat de lijst nog op dezelfde plek: focus terug op de regel Taal, anders de eerste regel
-        if (Taal.focusTaal) { Taal.focusTaal = false; repeat(5) { if (runCatching { taalRegel.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) } }
+        Taal.focusRegel?.let { r ->
+            Taal.focusRegel = null
+            val doel = when (r) { "datum" -> datumRegel; "klok" -> klokRegel; else -> taalRegel }
+            repeat(5) { if (runCatching { doel.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) }
+        }
         // via het tandwieltje bij de screensaver (systeeminstellingen): meteen naar die groep
         if (Toetsen.naarScreensaver) { Toetsen.naarScreensaver = false; if (SCREENSAVER_AAN) { lijst.scrollToItem(dreamItem(Instellingen.alleInstellingen)); delay(50); if (runCatching { dreamRegel.requestFocus() }.isSuccess) return@LaunchedEffect } }
         runCatching { eerste.requestFocus() }
@@ -220,7 +226,22 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             // taal: meteen toepassen = activity opnieuw opbouwen (alle teksten, datums en landnamen volgen)
             Keuzes(stringResource(R.string.taal), stringResource(R.string.taal_uitleg), Taal.TALEN.map { Taal.naam(it) }, Taal.TALEN.indexOf(Taal.code).coerceAtLeast(0), Modifier.focusRequester(taalRegel)) {
                 val nieuw = Taal.TALEN[it]
-                if (nieuw != Taal.code) { Taal.kies(ctx, nieuw); Taal.herstartSectie = Sectie.INSTELLINGEN; Taal.focusTaal = true; (ctx as? android.app.Activity)?.recreate() }
+                if (nieuw != Taal.code) { Taal.kies(ctx, nieuw); Taal.herstartSectie = Sectie.INSTELLINGEN; Taal.focusRegel = "taal"; (ctx as? android.app.Activity)?.recreate() }
+            }
+        }
+        item {
+            // datum/klok: net als de taal meteen overal toepassen (tijdlijn, viewer, screensaver) via recreate
+            val opties = Formaat.Datum.entries.map { Formaat.voorbeeld(d = it) }
+            Keuzes(stringResource(R.string.datumnotatie), stringResource(R.string.datumnotatie_uitleg), opties, Formaat.datum.ordinal, Modifier.focusRequester(datumRegel)) {
+                val nieuw = Formaat.Datum.entries[it]
+                if (nieuw != Formaat.datum) { Formaat.kies(ctx, d = nieuw); Taal.herstartSectie = Sectie.INSTELLINGEN; Taal.focusRegel = "datum"; (ctx as? android.app.Activity)?.recreate() }
+            }
+        }
+        item {
+            val opties = Formaat.Klok.entries.map { k -> if (k == Formaat.Klok.STANDAARD) stringResource(R.string.automatisch) + " (" + Formaat.voorbeeld(k = k) + ")" else Formaat.voorbeeld(k = k) }
+            Keuzes(stringResource(R.string.kloknotatie), stringResource(R.string.kloknotatie_uitleg), opties, Formaat.klok.ordinal, Modifier.focusRequester(klokRegel)) {
+                val nieuw = Formaat.Klok.entries[it]
+                if (nieuw != Formaat.klok) { Formaat.kies(ctx, k = nieuw); Taal.herstartSectie = Sectie.INSTELLINGEN; Taal.focusRegel = "klok"; (ctx as? android.app.Activity)?.recreate() }
             }
         }
         item {
