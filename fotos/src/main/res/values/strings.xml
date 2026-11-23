@@ -202,6 +202,31 @@
     <string name="partner_uitleg">Also show photos a partner shares with you in Immich</string>
     <string name="herinneringen_boven">Memories at the top</string>
     <string name="herinneringen_boven_uitleg">\"On this day\" row above the timeline</string>
+    <string name="verjaardagen">Birthdays</string>
+    <string name="verjaardagen_uitleg">Card at the top of the timeline when someone has a birthday (birth date of a person in Immich), with photos from that day in every year</string>
+    <string name="verjaardag_zichtbaar">Birthday card visible</string>
+    <string name="verjaardag_zichtbaar_uitleg">How many days after the birthday the card stays</string>
+    <string name="verjaardag_alleen_dag">Only on the day</string>
+    <string name="verjaardag_vandaag">Birthday today</string>
+    <string name="verjaardag_gisteren">Birthday yesterday</string>
+    <string name="verjaardag_titel">%s\'s birthday</string>
+    <string name="verjaardag_rond">Around %s\'s birthday</string>
+    <plurals name="verjaardag_dagen_erna">
+        <item quantity="one">%d day after</item>
+        <item quantity="other">%d days after</item>
+    </plurals>
+    <plurals name="verjaardag_geleden">
+        <item quantity="one">Birthday %d day ago</item>
+        <item quantity="other">Birthday %d days ago</item>
+    </plurals>
+    <plurals name="verjaardag_wordt">
+        <item quantity="one">Turns %d</item>
+        <item quantity="other">Turns %d</item>
+    </plurals>
+    <plurals name="verjaardag_werd">
+        <item quantity="one">Turned %d</item>
+        <item quantity="other">Turned %d</item>
+    </plurals>
     <string name="startscherm">Start screen</string>
     <string name="startscherm_uitleg">Which section opens when the app starts</string>
     <string name="begroeting">Greeting</string>
@@ -580,7 +605,8 @@
     <string name="nieuw_regel">What\'s new</string>
     <string name="nieuw_regel_uitleg">Changes in this version</string>
     <string-array name="wat_nieuw">
-        <item>Date format: day first or month first (“Sun, Sep 3, 2023”)</item>
-        <item>Time format: automatic, 24 hours or 12 hours</item>
+        <item>Birthdays: a card with confetti when someone is having a birthday (birth date set in Immich), showing their photos from that day</item>
+        <item>Settings → Timeline: turn birthdays on/off and choose how many days after the birthday the card stays</item>
+        <item>Screensaver: searching albums and people with the on-screen keyboard works again</item>
     </string-array>
 </resources>

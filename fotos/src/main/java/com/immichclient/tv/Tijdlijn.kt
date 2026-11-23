@@ -312,7 +312,7 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = stringResource(R.string.ga_naar_datum))
                         }
-                        if (scherm.metHerinneringen && Instellingen.herinneringen) HerinneringenRij(nav)
+                        if (scherm.metHerinneringen && (Instellingen.herinneringen || Instellingen.verjaardagen)) HerinneringenRij(nav)
                     }
                 }
             }
@@ -493,18 +493,23 @@ fun Melding(titel: String, tekst: String?, icoon: androidx.compose.ui.graphics.v
     }
 }
 
-/** "Op deze dag": kaarten bovenaan de tijdlijn, zoals in Immich. */
+/** "Op deze dag": kaarten bovenaan de tijdlijn, zoals in Immich; verjaardagen (Verjaardagen.kt) vooraan in dezelfde rij. */
 @Composable
 fun HerinneringenRij(nav: Nav) {
-    val lijst = Herinneringen.vandaag
-    LaunchedEffect(Unit) { Herinneringen.laadVandaag() }
-    if (lijst.isEmpty()) return
+    val metHerinneringen = Instellingen.herinneringen
+    val metVerjaardagen = Instellingen.verjaardagen
+    val lijst = if (metHerinneringen) Herinneringen.vandaag else emptyList()
+    val jarigen = if (metVerjaardagen) Verjaardagen.lijst else emptyList()
+    LaunchedEffect(metHerinneringen) { if (metHerinneringen) Herinneringen.laadVandaag() }
+    LaunchedEffect(metVerjaardagen, Instellingen.verjaardagDagen, Immich.stand) { if (metVerjaardagen) Verjaardagen.laad() }
+    if (lijst.isEmpty() && jarigen.isEmpty()) return
     // iets naar links + binnenmarge: anders valt de vergrote focusrand van de eerste kaart buiten de rij
     LazyRow(
         Modifier.fillMaxWidth().offset(x = (-10).dp).padding(top = 2.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        items(jarigen, key = { "jarig-" + it.persoonId }) { v -> VerjaardagKaart(v, nav) }
         items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav) }
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
@@ -203,6 +204,13 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.tijdlijn_volgorde_uitleg), listOf(stringResource(R.string.nieuwste_eerst), stringResource(R.string.oudste_eerst)), if (Instellingen.nieuwsteEerst) 0 else 1) { Instellingen.nieuwsteEerst = it == 0 } }
         if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
         if (alles) schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
+        schakel(R.string.verjaardagen, R.string.verjaardagen_uitleg, uitAan, Instellingen.verjaardagen) { Instellingen.verjaardagen = it }
+        if (alles) item {
+            val dagen = Instellingen.VERJAARDAG_DAGEN
+            val labels = dagen.map { if (it == 0) stringResource(R.string.verjaardag_alleen_dag) else pluralStringResource(R.plurals.verjaardag_dagen_erna, it, it) }
+            Keuzes(stringResource(R.string.verjaardag_zichtbaar), stringResource(R.string.verjaardag_zichtbaar_uitleg), labels,
+                dagen.indexOf(Instellingen.verjaardagDagen).coerceAtLeast(0)) { Instellingen.verjaardagDagen = dagen[it] }
+        }
         item {
             val keuzes = listOf(Sectie.FOTOS, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },

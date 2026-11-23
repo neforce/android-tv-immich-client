@@ -207,6 +207,8 @@ class MainActivity : ComponentActivity() {
             kaartCache = intent.getBooleanExtra("kaart_cache", kaartCache); kaartPrefetch = intent.getIntExtra("kaart_prefetch", -1)
             // `--es update_test 2.0`: doen alsof die versie geïnstalleerd is (updatecheck/-venster testen)
             Update.testVersie = intent.getStringExtra("update_test")
+            // `--es verjaardag_test 2026-11-21`: doen alsof het vandaag die dag is (verjaardagskaart)
+            Verjaardagen.testDatum = intent.getStringExtra("verjaardag_test")?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
         }
         setContent { FotosThema { FotosApp(finish = ::finish, herstart = ::recreate, testIndex = testIndex, startSectie = startSectie, instelTest = instelTest, taalTest = taalTest) } }
     }

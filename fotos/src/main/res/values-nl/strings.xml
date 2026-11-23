@@ -189,6 +189,31 @@
     <string name="partner_uitleg">Foto\'s die een partner in Immich met je deelt ook tonen</string>
     <string name="herinneringen_boven">Herinneringen bovenaan</string>
     <string name="herinneringen_boven_uitleg">Rij \"Op deze dag\" boven de tijdlijn</string>
+    <string name="verjaardagen">Verjaardagen</string>
+    <string name="verjaardagen_uitleg">Kaart bovenaan de tijdlijn als iemand jarig is (geboortedatum van een persoon in Immich), met foto\'s van die dag uit alle jaren</string>
+    <string name="verjaardag_zichtbaar">Verjaardag zichtbaar</string>
+    <string name="verjaardag_zichtbaar_uitleg">Hoeveel dagen na de verjaardag de kaart blijft staan</string>
+    <string name="verjaardag_alleen_dag">Alleen op de dag</string>
+    <string name="verjaardag_vandaag">Vandaag jarig</string>
+    <string name="verjaardag_gisteren">Gisteren jarig</string>
+    <string name="verjaardag_titel">Verjaardag %s</string>
+    <string name="verjaardag_rond">Rond de verjaardag van %s</string>
+    <plurals name="verjaardag_dagen_erna">
+        <item quantity="one">%d dag erna</item>
+        <item quantity="other">%d dagen erna</item>
+    </plurals>
+    <plurals name="verjaardag_geleden">
+        <item quantity="one">%d dag geleden jarig</item>
+        <item quantity="other">%d dagen geleden jarig</item>
+    </plurals>
+    <plurals name="verjaardag_wordt">
+        <item quantity="one">Wordt %d</item>
+        <item quantity="other">Wordt %d</item>
+    </plurals>
+    <plurals name="verjaardag_werd">
+        <item quantity="one">Werd %d</item>
+        <item quantity="other">Werd %d</item>
+    </plurals>
     <string name="startscherm">Startscherm</string>
     <string name="startscherm_uitleg">Welke sectie opent bij het starten van de app</string>
     <string name="begroeting">Begroeting</string>
@@ -563,7 +588,8 @@
     <string name="nieuw_regel">Wat is er nieuw</string>
     <string name="nieuw_regel_uitleg">Wijzigingen in deze versie</string>
     <string-array name="wat_nieuw">
-        <item>Datumnotatie: dag eerst of maand eerst („zo, sep. 3, 2023”)</item>
-        <item>Tijdnotatie: automatisch, 24 uur of 12 uur</item>
+        <item>Verjaardagen: een kaart met confetti als iemand jarig is (geboortedatum ingevuld in Immich), met de foto\'s van die dag</item>
+        <item>Instellingen → Tijdlijn: verjaardagen aan/uit en hoeveel dagen na de verjaardag de kaart blijft staan</item>
+        <item>Screensaver: albums en personen zoeken met het schermtoetsenbord werkt weer</item>
     </string-array>
 </resources>

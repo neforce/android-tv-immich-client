@@ -76,6 +76,11 @@ object Instellingen {
     var nieuwsteEerst by bool("nieuwste_eerst", true)
     var partners by bool("partners", true)
     var herinneringen by bool("herinneringen", true)
+    /** verjaardagskaart(en) bovenaan de tijdlijn (personen met een geboortedatum in Immich) */
+    var verjaardagen by bool("verjaardagen", true)
+    /** zoveel dagen na de verjaardag blijft de kaart nog staan (0 = alleen op de dag zelf) */
+    var verjaardagDagen by getal("verjaardag_dagen", 2)
+    val VERJAARDAG_DAGEN = (0..7).toList()
     var start by keuze("start", Sectie.FOTOS)
     var groet by keuze("groet", Groet.UIT)
     var groetTekst by tekst("groet_tekst", "")

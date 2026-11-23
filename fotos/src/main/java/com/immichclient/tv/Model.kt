@@ -28,7 +28,8 @@ data class Asset(
     val id: String, val naam: String, val omslag: String?, val aantal: Int,
     val van: LocalDate?, val tot: LocalDate?, val bijgewerkt: String, val gedeeld: Boolean, val oudsteEerst: Boolean,
 )
-@Immutable data class Persoon(val id: String, val naam: String, val favoriet: Boolean)
+/** [geboren] = geboortedatum uit Immich (optioneel), voor de verjaardagskaart */
+@Immutable data class Persoon(val id: String, val naam: String, val favoriet: Boolean, val geboren: LocalDate? = null)
 @Immutable data class Plaats(val stad: String, val land: String, val omslag: String)
 @Immutable data class Herinnering(val id: String, val jaar: Int, val dag: LocalDate, val assets: List<Asset>) {
     val jarenGeleden get() = dag.year - jaar

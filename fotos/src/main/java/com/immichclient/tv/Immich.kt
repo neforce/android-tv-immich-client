@@ -196,7 +196,13 @@ object Immich {
 
     suspend fun personen(): List<Persoon> = withContext(Dispatchers.Default) {
         val a = JSONObject(get("/people?size=1000&withHidden=false")).getJSONArray("people")
-        List(a.length()) { i -> a.getJSONObject(i).let { Persoon(it.getString("id"), it.optString("name"), it.optBoolean("isFavorite")) } }
+        List(a.length()) { i ->
+            a.getJSONObject(i).let {
+                // birthDate = "YYYY-MM-DD" of null
+                val geboren = it.optString("birthDate").take(10).takeIf { d -> d.length == 10 }?.let { d -> runCatching { LocalDate.parse(d) }.getOrNull() }
+                Persoon(it.getString("id"), it.optString("name"), it.optBoolean("isFavorite"), geboren)
+            }
+        }
             .filter { it.naam.isNotBlank() }
     }
 

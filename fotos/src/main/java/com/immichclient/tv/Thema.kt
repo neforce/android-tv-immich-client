@@ -257,8 +257,10 @@ fun Gezicht(p: Persoon, grootte: Dp) {
 
 /** Voor lagen over een scherm (toetsenbord, datumkiezer): focus blijft binnen de laag. */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-fun Modifier.focusVangen(): Modifier = this
-    .focusProperties { exit = { androidx.compose.ui.focus.FocusRequester.Cancel } }
+fun Modifier.focusVangen(actief: Boolean = true): Modifier = this
+    // actief = false als er een laag (bijv. TekstInvoer) búiten deze groep open is: Compose past `exit` ook toe op
+    // requestFocus, dus anders kan die laag nooit focus krijgen en scrollen de pijltjes in deze groep verder.
+    .focusProperties { exit = { if (actief) androidx.compose.ui.focus.FocusRequester.Cancel else androidx.compose.ui.focus.FocusRequester.Default } }
     .focusGroup()
 
 /** ▲▼ scrollen een lange tekstlaag (verticalScroll heeft zelf geen toetsbediening). */

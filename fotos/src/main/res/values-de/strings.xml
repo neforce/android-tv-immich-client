@@ -189,6 +189,31 @@
     <string name="partner_uitleg">Auch Fotos zeigen, die ein Partner in Immich mit dir teilt</string>
     <string name="herinneringen_boven">Erinnerungen oben</string>
     <string name="herinneringen_boven_uitleg">Reihe \"An diesem Tag\" über der Zeitleiste</string>
+    <string name="verjaardagen">Geburtstage</string>
+    <string name="verjaardagen_uitleg">Karte oben in der Zeitleiste, wenn jemand Geburtstag hat (Geburtsdatum einer Person in Immich), mit Fotos von diesem Tag aus allen Jahren</string>
+    <string name="verjaardag_zichtbaar">Geburtstag sichtbar</string>
+    <string name="verjaardag_zichtbaar_uitleg">Wie viele Tage nach dem Geburtstag die Karte noch angezeigt wird</string>
+    <string name="verjaardag_alleen_dag">Nur am Tag selbst</string>
+    <string name="verjaardag_vandaag">Hat heute Geburtstag</string>
+    <string name="verjaardag_gisteren">Hatte gestern Geburtstag</string>
+    <string name="verjaardag_titel">Geburtstag von %s</string>
+    <string name="verjaardag_rond">Rund um den Geburtstag von %s</string>
+    <plurals name="verjaardag_dagen_erna">
+        <item quantity="one">%d Tag danach</item>
+        <item quantity="other">%d Tage danach</item>
+    </plurals>
+    <plurals name="verjaardag_geleden">
+        <item quantity="one">Geburtstag vor %d Tag</item>
+        <item quantity="other">Geburtstag vor %d Tagen</item>
+    </plurals>
+    <plurals name="verjaardag_wordt">
+        <item quantity="one">Wird %d</item>
+        <item quantity="other">Wird %d</item>
+    </plurals>
+    <plurals name="verjaardag_werd">
+        <item quantity="one">Wurde %d</item>
+        <item quantity="other">Wurde %d</item>
+    </plurals>
     <string name="startscherm">Startbildschirm</string>
     <string name="startscherm_uitleg">Welcher Bereich beim Start der App geöffnet wird</string>
     <string name="begroeting">Begrüßung</string>
@@ -563,7 +588,8 @@
     <string name="nieuw_regel">Was ist neu</string>
     <string name="nieuw_regel_uitleg">Änderungen in dieser Version</string>
     <string-array name="wat_nieuw">
-        <item>Datumsformat: Tag zuerst oder Monat zuerst („So, Sep. 3, 2023“)</item>
-        <item>Zeitformat: automatisch, 24 Stunden oder 12 Stunden</item>
+        <item>Geburtstage: eine Karte mit Konfetti, wenn jemand Geburtstag hat (Geburtsdatum in Immich eingetragen), mit den Fotos von diesem Tag</item>
+        <item>Einstellungen → Zeitleiste: Geburtstage ein/aus und wie viele Tage nach dem Geburtstag die Karte bleibt</item>
+        <item>Bildschirmschoner: Alben und Personen mit der Bildschirmtastatur suchen funktioniert wieder</item>
     </string-array>
 </resources>

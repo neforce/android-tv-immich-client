@@ -15,6 +15,7 @@ A fast, remote-friendly client for [Immich](https://immich.app) for Android TV b
 
 - **Timeline**: your entire library grouped by month and day, in a justified grid like Immich itself. Thumbnails start as blurred [ThumbHash](https://evanw.github.io/thumbhash/) previews and load month by month while you scroll, so even libraries with 100,000+ items stay smooth.
 - **Memories**: "On this day" cards at the top of the timeline and a dedicated Memories screen for the past week, played as a slideshow.
+- **Birthdays**: when someone with a birth date in Immich has a birthday, a card with confetti appears at the top of the timeline with their photos from that day in earlier years (stays for a few days, adjustable).
 - **Viewer**: full-screen photos and videos, a blurred backdrop instead of black bars, an info panel (date, people, albums, place, camera and lens), and an animated country map with the location of the photo. The album(s) a photo belongs to are shown with it, also when you browse a person or the timeline.
 - **Slideshow**: adjustable interval, optional Ken Burns zoom, chronological or shuffled, fade or slide transitions. Can run with nothing but the photo on screen (no text, no progress ring).
 - **Search**: Immich smart search ("beach", "birthday cake", "dog in the snow"), text in photos (OCR) and file names, with a built-in on-screen keyboard and voice search.
@@ -121,6 +122,7 @@ The first line, **Show settings**, switches between **Basic** (the settings most
 | | Default order | newest / oldest first |
 | | Partner's photos | on / off |
 | | Memories at the top | on / off |
+| | Birthdays | on / off; card stays 0 – 7 days after the birthday |
 | | Start screen | Photos / Memories / Map / Albums / Folders / Favorites |
 | | Greeting | off / automatic ("Good evening, Anna") / custom text |
 | Map | Start view | whole world / Europe / country with the most photos / last viewed place |

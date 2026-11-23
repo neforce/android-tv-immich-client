@@ -195,6 +195,35 @@
     <string name="partner_uitleg">Afficher aussi les photos qu\'un partenaire partage avec vous dans Immich</string>
     <string name="herinneringen_boven">Souvenirs en haut</string>
     <string name="herinneringen_boven_uitleg">Ligne « Ce jour-là » au-dessus de la chronologie</string>
+    <string name="verjaardagen">Anniversaires</string>
+    <string name="verjaardagen_uitleg">Carte en haut de la chronologie quand c\'est l\'anniversaire de quelqu\'un (date de naissance d\'une personne dans Immich), avec les photos de ce jour au fil des ans</string>
+    <string name="verjaardag_zichtbaar">Anniversaire visible</string>
+    <string name="verjaardag_zichtbaar_uitleg">Combien de jours après l\'anniversaire la carte reste affichée</string>
+    <string name="verjaardag_alleen_dag">Seulement le jour même</string>
+    <string name="verjaardag_vandaag">Anniversaire aujourd\'hui</string>
+    <string name="verjaardag_gisteren">Anniversaire hier</string>
+    <string name="verjaardag_titel">Anniversaire de %s</string>
+    <string name="verjaardag_rond">Autour de l\'anniversaire de %s</string>
+    <plurals name="verjaardag_dagen_erna">
+        <item quantity="one">%d jour après</item>
+        <item quantity="many">%d jours après</item>
+        <item quantity="other">%d jours après</item>
+    </plurals>
+    <plurals name="verjaardag_geleden">
+        <item quantity="one">Anniversaire il y a %d jour</item>
+        <item quantity="many">Anniversaire il y a %d jours</item>
+        <item quantity="other">Anniversaire il y a %d jours</item>
+    </plurals>
+    <plurals name="verjaardag_wordt">
+        <item quantity="one">Fête son %d an</item>
+        <item quantity="many">Fête ses %d ans</item>
+        <item quantity="other">Fête ses %d ans</item>
+    </plurals>
+    <plurals name="verjaardag_werd">
+        <item quantity="one">A eu %d an</item>
+        <item quantity="many">A eu %d ans</item>
+        <item quantity="other">A eu %d ans</item>
+    </plurals>
     <string name="startscherm">Écran d\'accueil</string>
     <string name="startscherm_uitleg">Section ouverte au lancement de l\'appli</string>
     <string name="begroeting">Salutation</string>
@@ -570,7 +599,8 @@
     <string name="nieuw_regel">Nouveautés</string>
     <string name="nieuw_regel_uitleg">Changements de cette version</string>
     <string-array name="wat_nieuw">
-        <item>Format de date : jour d\'abord ou mois d\'abord (« dim., sept. 3, 2023 »)</item>
-        <item>Format de l\'heure : automatique, 24 heures ou 12 heures</item>
+        <item>Anniversaires : une carte avec des confettis quand c\'est l\'anniversaire de quelqu\'un (date de naissance renseignée dans Immich), avec ses photos de ce jour-là</item>
+        <item>Paramètres → Chronologie : activer/désactiver les anniversaires et choisir combien de jours la carte reste après l\'anniversaire</item>
+        <item>Économiseur d\'écran : la recherche d\'albums et de personnes avec le clavier à l\'écran fonctionne à nouveau</item>
     </string-array>
 </resources>

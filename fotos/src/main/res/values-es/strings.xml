@@ -195,6 +195,35 @@
     <string name="partner_uitleg">Mostrar también las fotos que tu pareja comparte contigo en Immich</string>
     <string name="herinneringen_boven">Recuerdos arriba</string>
     <string name="herinneringen_boven_uitleg">Fila «Tal día como hoy» encima de la cronología</string>
+    <string name="verjaardagen">Cumpleaños</string>
+    <string name="verjaardagen_uitleg">Tarjeta encima de la cronología cuando alguien cumple años (fecha de nacimiento de una persona en Immich), con fotos de ese día de todos los años</string>
+    <string name="verjaardag_zichtbaar">Cumpleaños visible</string>
+    <string name="verjaardag_zichtbaar_uitleg">Cuántos días después del cumpleaños sigue visible la tarjeta</string>
+    <string name="verjaardag_alleen_dag">Solo ese día</string>
+    <string name="verjaardag_vandaag">Cumpleaños hoy</string>
+    <string name="verjaardag_gisteren">Cumpleaños ayer</string>
+    <string name="verjaardag_titel">Cumpleaños de %s</string>
+    <string name="verjaardag_rond">En torno al cumpleaños de %s</string>
+    <plurals name="verjaardag_dagen_erna">
+        <item quantity="one">%d día después</item>
+        <item quantity="many">%d días después</item>
+        <item quantity="other">%d días después</item>
+    </plurals>
+    <plurals name="verjaardag_geleden">
+        <item quantity="one">Cumpleaños hace %d día</item>
+        <item quantity="many">Cumpleaños hace %d días</item>
+        <item quantity="other">Cumpleaños hace %d días</item>
+    </plurals>
+    <plurals name="verjaardag_wordt">
+        <item quantity="one">Cumple %d</item>
+        <item quantity="many">Cumple %d</item>
+        <item quantity="other">Cumple %d</item>
+    </plurals>
+    <plurals name="verjaardag_werd">
+        <item quantity="one">Cumplió %d</item>
+        <item quantity="many">Cumplió %d</item>
+        <item quantity="other">Cumplió %d</item>
+    </plurals>
     <string name="startscherm">Pantalla de inicio</string>
     <string name="startscherm_uitleg">Qué sección se abre al iniciar la app</string>
     <string name="begroeting">Saludo</string>
@@ -570,7 +599,8 @@
     <string name="nieuw_regel">Novedades</string>
     <string name="nieuw_regel_uitleg">Cambios en esta versión</string>
     <string-array name="wat_nieuw">
-        <item>Formato de fecha: primero el día o primero el mes («dom, sept 3, 2023»)</item>
-        <item>Formato de hora: automático, 24 horas o 12 horas</item>
+        <item>Cumpleaños: una tarjeta con confeti cuando alguien cumple años (fecha de nacimiento en Immich), con sus fotos de ese día</item>
+        <item>Ajustes → Cronología: activar/desactivar los cumpleaños y cuántos días después la tarjeta sigue visible</item>
+        <item>Salvapantallas: buscar álbumes y personas con el teclado en pantalla vuelve a funcionar</item>
     </string-array>
 </resources>

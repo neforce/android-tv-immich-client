@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -321,10 +322,11 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
 fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), sluit: () -> Unit, klaar: (String) -> Unit) {
     var tekst by remember { mutableStateOf(begin) }
     val eerste = remember { FocusRequester() }
+    var heeftFocus by remember { mutableStateOf(false) }
     fun zet(t: String) { tekst = t; live?.invoke(t) }
     BackHandler { sluit() }
     Box(
-        Modifier.fillMaxSize().background(Color(0xF00A0A0A)).focusVangen().onPreviewKeyEvent { e ->
+        Modifier.fillMaxSize().background(Color(0xF00A0A0A)).onFocusChanged { heeftFocus = it.hasFocus }.focusVangen().onPreviewKeyEvent { e ->
             if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             val n = e.nativeKeyEvent
             when {
@@ -368,7 +370,15 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
             }
         }
     }
-    LaunchedEffect(Unit) { delay(40); runCatching { eerste.requestFocus() } }
+    // Focus naar de eerste toets. Eén poging na 40 ms was op sommige boxen te vroeg (laag nog niet geplaatst): dan
+    // bleef de focus op het scherm erachter en scrolden de pijltjes daar. Daarom herhalen tot de laag echt focus heeft.
+    LaunchedEffect(Unit) {
+        repeat(40) {
+            delay(if (it == 0) 40L else 25L)
+            if (heeftFocus) return@LaunchedEffect
+            runCatching { eerste.requestFocus() }
+        }
+    }
 }
 
 @Composable

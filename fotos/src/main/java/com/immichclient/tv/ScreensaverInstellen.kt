@@ -336,14 +336,16 @@ fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () 
         else l.filter { it.id in bijOpenen } + l.filter { it.id !in bijOpenen }
     }
     // focus op de huidige keuze (staat bovenaan) of de eerste regel; na zoeken op de eerste treffer
-    LaunchedEffect(items, zoek) {
+    // niet terwijl het toetsenbord open is: anders pakt de lijst erachter na elke letter de focus weer af
+    LaunchedEffect(items, zoek, zoekOpen) {
+        if (zoekOpen) return@LaunchedEffect
         if (zichtbaar.isEmpty()) { if (items != null) { delay(40); runCatching { zoekKnop.requestFocus() } }; return@LaunchedEffect }
         lijst.scrollToItem(0)
         delay(40)
         repeat(5) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) }
     }
     var wasOpen by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxSize().background(Color(0xF60A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 36.dp)) {
+    Box(Modifier.fillMaxSize().background(Color(0xF60A0A0A)).focusVangen(actief = !zoekOpen).padding(horizontal = 64.dp, vertical = 36.dp)) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
